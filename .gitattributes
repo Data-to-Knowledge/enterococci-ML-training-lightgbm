@@ -1,18 +1,24 @@
-# Vendored everything by default
+# Vendored everything by default (exclude from language stats)
 * linguist-vendored
 
-# Except Python source code files
+# Except Python source code files (INCLUDE in language stats)
 *.py !linguist-vendored
 
-# Auto detect text files and perform LF normalization
+# Auto-detect text files and perform LF normalization
 * text=auto
 
-# Exclude data and output files from GitHub language statistics
+# Exclude (vendor) common data/output/doc folders and files from stats
+results/** linguist-vendored
+reports/** linguist-vendored
+env/** linguist-vendored
+env310/** linguist-vendored
+data/** linguist-vendored
+output/** linguist-vendored
+archive/** linguist-vendored
+
+# Exclude common file types
 *.csv linguist-vendored
 *.html linguist-vendored
-/data/** linguist-vendored
-/output/** linguist-vendored
-/archive/** linguist-vendored
 *.md linguist-vendored
 *.txt linguist-vendored
 *.png linguist-vendored
