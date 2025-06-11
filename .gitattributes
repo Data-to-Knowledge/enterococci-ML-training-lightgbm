@@ -1,0 +1,9 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Exclude data and output files from GitHub language statistics
+*.csv linguist-vendored
+*.html linguist-vendored
+/data/** linguist-vendored
+/output/** linguist-vendored
+/archive/** linguist-vendored
