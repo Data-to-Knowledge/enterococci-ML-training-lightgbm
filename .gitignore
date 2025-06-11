@@ -1,0 +1,26 @@
+# Ignore Python virtual environment folders
+env/
+venv/
+env310/
+
+# Ignore Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore OS files
+.DS_Store
+
+# Ignore other environment/IDE folders
+*.egg-info/
+.idea/
+
+\#test.py
+/VIRTUAL BEACH DATA
+Passwords.ini
+venv/
+__pycache__/
+*.py[cod]
