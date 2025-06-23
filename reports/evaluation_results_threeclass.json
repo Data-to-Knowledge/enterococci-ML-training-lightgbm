@@ -1,0 +1,72 @@
+{
+    "results": {
+        "fold_results": {
+            "fold_1": {
+                "rmse": 457.85593607274643,
+                "safe_precision": 0.8874,
+                "safe_recall": 0.9426,
+                "safe_f1-score": 0.9142,
+                "caution_precision": 0.25,
+                "caution_recall": 0.0556,
+                "caution_f1-score": 0.0909,
+                "exceedance_precision": 0.5333,
+                "exceedance_recall": 0.5517,
+                "exceedance_f1-score": 0.5424,
+                "accuracy": 0.8359,
+                "macro_precision": 0.5569,
+                "macro_recall": 0.5166,
+                "macro_f1-score": 0.5158
+            },
+            "fold_2": {
+                "rmse": 596.8827453897122,
+                "safe_precision": 0.9326,
+                "safe_recall": 0.9261,
+                "safe_f1-score": 0.9293,
+                "caution_precision": 0.0455,
+                "caution_recall": 0.0667,
+                "caution_f1-score": 0.0541,
+                "exceedance_precision": 0.7241,
+                "exceedance_recall": 0.6176,
+                "exceedance_f1-score": 0.6667,
+                "accuracy": 0.8559,
+                "macro_precision": 0.5674,
+                "macro_recall": 0.5368,
+                "macro_f1-score": 0.55
+            },
+            "fold_3": {
+                "rmse": 606.9433792193907,
+                "safe_precision": 0.9542,
+                "safe_recall": 0.8263,
+                "safe_f1-score": 0.8856,
+                "caution_precision": 0.0667,
+                "caution_recall": 0.1111,
+                "caution_f1-score": 0.0833,
+                "exceedance_precision": 0.3165,
+                "exceedance_recall": 0.6757,
+                "exceedance_f1-score": 0.431,
+                "accuracy": 0.786,
+                "macro_precision": 0.4458,
+                "macro_recall": 0.5377,
+                "macro_f1-score": 0.4667
+            },
+            "overall": {
+                "rmse": 570.7127444855821,
+                "safe_precision": 0.9297,
+                "safe_recall": 0.885,
+                "safe_f1-score": 0.9068,
+                "caution_precision": 0.0714,
+                "caution_recall": 0.0784,
+                "caution_f1-score": 0.0748,
+                "exceedance_precision": 0.4493,
+                "exceedance_recall": 0.62,
+                "exceedance_f1-score": 0.521,
+                "accuracy": 0.8204,
+                "macro_precision": 0.4835,
+                "macro_recall": 0.5278,
+                "macro_f1-score": 0.5009
+            }
+        },
+        "fold_predictions": [
+            {
+                "predictions": 10.268096898863055,
+                "DateTime": 

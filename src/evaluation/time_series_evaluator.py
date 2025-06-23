@@ -1,8 +1,9 @@
+
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any
 import pandas as pd
 
-from src.evaluation.evaluator import Evaluator
+from src.evaluation.evaluator_threeclass import EvaluatorThreeClass as Evaluator
 from src.evaluation.cross_validation import TimeSeriesCV
 from src.utils.logging import setup_logger
 
@@ -91,6 +92,10 @@ class TimeSeriesEvaluator(Evaluator):
         overall_results = self._calculate_metrics(y_true, y_pred)
         test_fold_results['overall'] = overall_results
         
+        # Ensure DateTime is in string format to avoid JSON serialization issues
+        test_predictions["DateTime"] = pd.to_datetime(test_predictions["DateTime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+        train_predictions["DateTime"] = pd.to_datetime(train_predictions["DateTime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+
         # Update results
         self.results = {
             'fold_results': test_fold_results,

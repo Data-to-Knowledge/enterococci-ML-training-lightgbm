@@ -14,7 +14,9 @@ from src.data.preprocessing import Preprocessor
 from src.data.feature_engineering import FeatureEngineer
 from src.models.model_factory import ModelFactory
 from src.evaluation.time_series_evaluator import TimeSeriesEvaluator
-from src.evaluation.evaluator import Evaluator
+# from src.evaluation.evaluator import Evaluator
+from src.evaluation.evaluator_threeclass import EvaluatorThreeClass as Evaluator
+from src.evaluation.cross_validation import TimeSeriesCV
 from src.utils.logging import setup_logger
 # from src.visualization.forecast_plots import create_forecast_visualizations
 from src.visualization.interactive_plots import create_interactive_forecast_plot
@@ -193,7 +195,7 @@ def run_pipeline(config_path: str, mode: str):
                 
                 # Calculate metrics if target is available
                 if has_target:
-                    from src.evaluation.evaluator import Evaluator
+                    from src.evaluation.evaluator_threeclass import Evaluator
                     evaluator = Evaluator(config["evaluation"])
                     metrics = evaluator._calculate_metrics(y_true, predictions)
                     
