@@ -136,38 +136,7 @@ class FeatureEngineer:
 
         return X
 
-    def lagged_enterococci_features(self, data):
-        # Ensure correct data types
-        data["DateTime"] = pd.to_datetime(data["DateTime"])
-        data["Season"] = data["Season"].astype("category")
-        data["SITE_NAME"] = data["SITE_NAME"].astype("category")
-        
-        data = data.sort_values(by=["SITE_NAME", "DateTime"])
-        
-        # (DO NOT add Site_Season_Average or Site_Historical_Exceedance_Rate here)
-        # Restore original order using SITE_NAME and DateTime
-        data = data[["SITE_NAME", "DateTime"]].merge(data, on=["SITE_NAME", "DateTime"], how="left")
-
-        data.drop(columns=["Season", "YEAR"], inplace=True)
-        
-        return data
-
-
     # def lagged_enterococci_features(self, data):
-    #     """
-    #     Adds Site Season Average (rolling mean of Enterococci) and 
-    #     Site Historical Exceedance Rate (proportion of exceedances per site-season) to X_train and X_test.
-        
-    #     Parameters:
-    #     X_train (pd.DataFrame): Training feature set
-    #     X_test (pd.DataFrame): Test feature set
-    #     y_train (pd.Series): Training target variable
-    #     y_test (pd.Series): Test target variable
-        
-    #     Returns:
-    #     pd.DataFrame, pd.DataFrame, pd.Series, pd.Series: Updated training and test feature sets with new features
-    #     """
-        
     #     # Ensure correct data types
     #     data["DateTime"] = pd.to_datetime(data["DateTime"])
     #     data["Season"] = data["Season"].astype("category")
@@ -175,23 +144,54 @@ class FeatureEngineer:
         
     #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
         
-    #     # 1. Site Season Average - Rolling mean using only past values
-    #     data["Site_Season_Average"] = data.groupby(["SITE_NAME", "Season"])['Enterococci']\
-    #         .transform(lambda x: x.shift(1).rolling(window=5, min_periods=1).mean())
-        
-    #     # 2. Site Historical Exceedance Rate - Proportion of past exceedances per season/site
-    #     def exceedance_rate_calc(x):
-    #         past_values = x.shift(1)
-    #         return (past_values >= 280).rolling(window=len(past_values), min_periods=1).mean()
-        
-    #     data["Site_Historical_Exceedance_Rate"] = data.groupby(["SITE_NAME", "Season"])['Enterococci'].transform(exceedance_rate_calc)
-        
+    #     # (DO NOT add Site_Season_Average or Site_Historical_Exceedance_Rate here)
     #     # Restore original order using SITE_NAME and DateTime
-    #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
-        
-    #     # Reorder according to the original order in X_train and X_test
     #     data = data[["SITE_NAME", "DateTime"]].merge(data, on=["SITE_NAME", "DateTime"], how="left")
 
     #     data.drop(columns=["Season", "YEAR"], inplace=True)
         
     #     return data
+
+
+    def lagged_enterococci_features(self, data):
+        """
+        Adds Site Season Average (rolling mean of Enterococci) and 
+        Site Historical Exceedance Rate (proportion of exceedances per site-season) to X_train and X_test.
+        
+        Parameters:
+        X_train (pd.DataFrame): Training feature set
+        X_test (pd.DataFrame): Test feature set
+        y_train (pd.Series): Training target variable
+        y_test (pd.Series): Test target variable
+        
+        Returns:
+        pd.DataFrame, pd.DataFrame, pd.Series, pd.Series: Updated training and test feature sets with new features
+        """
+        
+        # Ensure correct data types
+        data["DateTime"] = pd.to_datetime(data["DateTime"])
+        data["Season"] = data["Season"].astype("category")
+        data["SITE_NAME"] = data["SITE_NAME"].astype("category")
+        
+        data = data.sort_values(by=["SITE_NAME", "DateTime"])
+        
+        # 1. Site Season Average - Rolling mean using only past values
+        data["Site_Season_Average"] = data.groupby(["SITE_NAME", "Season"])['Enterococci']\
+            .transform(lambda x: x.shift(1).rolling(window=5, min_periods=1).mean())
+        
+        # 2. Site Historical Exceedance Rate - Proportion of past exceedances per season/site
+        def exceedance_rate_calc(x):
+            past_values = x.shift(1)
+            return (past_values >= 280).rolling(window=len(past_values), min_periods=1).mean()
+        
+        data["Site_Historical_Exceedance_Rate"] = data.groupby(["SITE_NAME", "Season"])['Enterococci'].transform(exceedance_rate_calc)
+        
+        # Restore original order using SITE_NAME and DateTime
+        data = data.sort_values(by=["SITE_NAME", "DateTime"])
+        
+        # Reorder according to the original order in X_train and X_test
+        data = data[["SITE_NAME", "DateTime"]].merge(data, on=["SITE_NAME", "DateTime"], how="left")
+
+        data.drop(columns=["Season", "YEAR"], inplace=True)
+        
+        return data
