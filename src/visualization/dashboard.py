@@ -1,5 +1,3 @@
-# dashboard.py
-
 from pathlib import Path
 import sys
 from functools import reduce
@@ -9,12 +7,8 @@ import plotly.graph_objects as go
 import dash
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output
-from sklearn.metrics import (
-    mean_squared_error, mean_absolute_error, r2_score,
-    confusion_matrix, classification_report
-)
+from sklearn.metrics import confusion_matrix
 
-# Path setup
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root))
 
@@ -22,11 +16,9 @@ from src.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 
-# Thresholds
 SAFE_THRESHOLD = 140
 EXCEEDANCE_THRESHOLD = 280
 CLASS_LABELS = ["SAFE", "PRECAUTIONARY", "EXCEEDANCE"]
-
 
 def classify_enterococci(value):
     if value < SAFE_THRESHOLD:
@@ -35,6 +27,70 @@ def classify_enterococci(value):
         return "PRECAUTIONARY"
     else:
         return "EXCEEDANCE"
+
+def create_performance_table(df, model_col):
+    df = df.copy()
+    df["True_Class"] = df["Enterococci"].apply(classify_enterococci)
+    df["Pred_Class"] = df[model_col].apply(classify_enterococci)
+
+    def calculate_metrics_per_class(y_true, y_pred, target_class):
+        labels = CLASS_LABELS
+        matrix = confusion_matrix(y_true, y_pred, labels=labels)
+        idx = labels.index(target_class)
+
+        TP = matrix[idx, idx]
+        FP = matrix[:, idx].sum() - TP
+        FN = matrix[idx, :].sum() - TP
+        TN = matrix.sum() - (TP + FP + FN)
+
+        precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+        recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+
+        return TP, FP, FN, TN, round(f1, 3)
+
+    perf_rows = []
+    for site in ["OVERALL"] + sorted(df["SITE_NAME"].unique()):
+        subset = df if site == "OVERALL" else df[df["SITE_NAME"] == site]
+        row = {"SITE_NAME": site}
+        for cls in CLASS_LABELS:
+            TP, FP, FN, TN, f1 = calculate_metrics_per_class(subset["True_Class"], subset["Pred_Class"], cls)
+            row[f"{cls}_TP"] = TP
+            row[f"{cls}_FP"] = FP
+            row[f"{cls}_FN"] = FN
+            row[f"{cls}_TN"] = TN
+            row[f"{cls}_F1"] = f1
+        perf_rows.append(row)
+
+    return pd.DataFrame(perf_rows)
+
+def create_stacked_bar_data(df, model_col):
+    df = df.copy()
+    df["True_Class"] = df["Enterococci"].apply(classify_enterococci)
+    df["Pred_Class"] = df[model_col].apply(classify_enterococci)
+    return df.groupby(["True_Class", "Pred_Class"]).size().reset_index(name="count")
+
+
+def flatten_confusion_and_metrics(perf_df):
+    records = []
+    for _, row in perf_df.iterrows():
+        site = row['SITE_NAME']
+        for cls in CLASS_LABELS:
+            record = {
+                "SITE_NAME": site,
+                "CLASS": cls,
+                "TP": row.get(f"{cls}_TP", 0),
+                "FP": row.get(f"{cls}_FP", 0),
+                "FN": row.get(f"{cls}_FN", 0),
+                "TN": row.get(f"{cls}_TN", 0),
+                "F1": row.get(f"{cls}_F1", 0)
+            }
+            tp, fp, fn = record["TP"], record["FP"], record["FN"]
+            record["Precision"] = tp / (tp + fp) if (tp + fp) else 0
+            record["Recall"] = tp / (tp + fn) if (tp + fn) else 0
+            record["Accuracy"] = (tp + record["TN"]) / (tp + fp + fn + record["TN"]) if (tp + fp + fn + record["TN"]) else 0
+            records.append(record)
+    return pd.DataFrame(records)
 
 
 def generate_dashboard(forecast):
@@ -54,7 +110,23 @@ def generate_dashboard(forecast):
     data = merged_df.copy()
 
     model_names = list(forecast.keys())
-    performance_tables = {model: create_performance_table(data, model) for model in model_names}
+    performance_tables = {}
+
+    for model in model_names:
+        perf_df = create_performance_table(data, model)
+        performance_tables[model] = perf_df
+
+    for model in model_names:
+        perf_df = create_performance_table(data, model)
+        performance_tables[model] = perf_df
+
+        # 📤 Export CSV per model
+        flat_df = flatten_confusion_and_metrics(perf_df)
+        out_path = Path("outputs") / f"{model}_threeclass_confusion_metrics.csv"
+        out_path.parent.mkdir(exist_ok=True)
+        flat_df.to_csv(out_path, index=False)
+        logger.info(f"Saved confusion metrics CSV to {out_path}")
+
 
     app = dash.Dash(__name__, suppress_callback_exceptions=True)
 
@@ -90,16 +162,14 @@ def generate_dashboard(forecast):
             ], style={'width': '30%', 'display': 'inline-block'})
         ]),
         dcc.Graph(id='forecast-graph'),
-        html.H2("Performance Metrics", style={'textAlign': 'center'}),
+        html.Br(),
+        html.H2("Performance Table", style={'textAlign': 'center'}),
         dash_table.DataTable(
             id='performance-table',
             style_table={'overflowX': 'auto'},
             style_cell={'textAlign': 'center'},
             style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'},
-            style_data_conditional=[{
-                'if': {'row_index': 0},
-                'backgroundColor': 'rgb(240, 240, 240)', 'fontWeight': 'bold'
-            }]
+            page_size=30
         )
     ])
 
@@ -117,7 +187,6 @@ def generate_dashboard(forecast):
         fig = go.Figure()
 
         if selected_plot_type == "model_comparison":
-            # Add actual
             if "Enterococci" in site_data.columns:
                 fig.add_trace(go.Scatter(
                     x=x_vals, y=site_data["Enterococci"],
@@ -126,7 +195,7 @@ def generate_dashboard(forecast):
                     hovertext=datetimes
                 ))
 
-            for i, model in enumerate(model_names):
+            for model in model_names:
                 if model in site_data.columns:
                     fig.add_trace(go.Scatter(
                         x=x_vals, y=site_data[model],
@@ -173,49 +242,13 @@ def generate_dashboard(forecast):
         return fig
 
     @app.callback(
-        Output('performance-table', 'data'),
-        Output('performance-table', 'columns'),
-        Input('model-dropdown', 'value')
+        [Output('performance-table', 'data'),
+         Output('performance-table', 'columns')],
+        [Input('model-dropdown', 'value')]
     )
-    def update_performance_table(selected_model):
-        df = performance_tables[selected_model]
-        return df.to_dict('records'), [{"name": i, "id": i} for i in df.columns]
+    def update_performance_table(model):
+        df = performance_tables[model]
+        columns = [{"name": i, "id": i} for i in df.columns]
+        return df.to_dict('records'), columns
 
     return app
-
-
-def create_performance_table(df, model_col):
-    df = df.copy()
-    df["True_Class"] = df["Enterococci"].apply(classify_enterococci)
-    df["Pred_Class"] = df[model_col].apply(classify_enterococci)
-
-    overall = classification_report(df["True_Class"], df["Pred_Class"], labels=CLASS_LABELS, output_dict=True, zero_division=0)
-    matrix = confusion_matrix(df["True_Class"], df["Pred_Class"], labels=CLASS_LABELS)
-
-    perf_data = []
-    overall_row = {
-        "SITE_NAME": "OVERALL",
-        "Accuracy": round(overall["accuracy"], 3),
-        "F1_SAFE": round(overall["SAFE"]["f1-score"], 3),
-        "F1_PRECAUTIONARY": round(overall["PRECAUTIONARY"]["f1-score"], 3),
-        "F1_EXCEEDANCE": round(overall["EXCEEDANCE"]["f1-score"], 3),
-        "Confusion_Matrix": str(matrix.tolist())
-    }
-    perf_data.append(overall_row)
-
-    for site in df["SITE_NAME"].unique():
-        site_df = df[df["SITE_NAME"] == site]
-        site_report = classification_report(site_df["True_Class"], site_df["Pred_Class"], labels=CLASS_LABELS, output_dict=True, zero_division=0)
-        site_matrix = confusion_matrix(site_df["True_Class"], site_df["Pred_Class"], labels=CLASS_LABELS)
-
-        row = {
-            "SITE_NAME": site,
-            "Accuracy": round(site_report["accuracy"], 3),
-            "F1_SAFE": round(site_report["SAFE"]["f1-score"], 3),
-            "F1_PRECAUTIONARY": round(site_report["PRECAUTIONARY"]["f1-score"], 3),
-            "F1_EXCEEDANCE": round(site_report["EXCEEDANCE"]["f1-score"], 3),
-            "Confusion_Matrix": str(site_matrix.tolist())
-        }
-        perf_data.append(row)
-
-    return pd.DataFrame(perf_data)
