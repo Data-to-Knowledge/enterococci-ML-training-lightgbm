@@ -173,7 +173,7 @@ def run_pipeline(config_path: str, mode: str):
 
         logger.info(f"Interactive visualization saved to {html_path}")
 
-    return app  # or `return app` if dashboard is used
+    return None  # or `return app` if dashboard is used
 
 
 
