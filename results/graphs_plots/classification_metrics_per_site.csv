@@ -1,0 +1,64 @@
+SITE,CLASS,Precision,Recall,F1-Score,Support
+Akaroa at main beach,SAFE,0.984,0.984,0.984,183
+Akaroa at main beach,CAUTION,0.5,0.25,0.333,8
+Akaroa at main beach,EXCEED,0.692,1.0,0.818,9
+Caroline Bay - mid beach,SAFE,0.991,0.987,0.989,233
+Caroline Bay - mid beach,CAUTION,0.333,0.5,0.4,4
+Caroline Bay - mid beach,EXCEED,1.0,0.857,0.923,7
+Cass Bay at boat ramp,SAFE,0.967,0.978,0.973,182
+Cass Bay at boat ramp,CAUTION,0.6,0.333,0.429,9
+Cass Bay at boat ramp,EXCEED,0.556,0.714,0.625,7
+Charteris Bay Paradise Beach,SAFE,1.0,0.982,0.991,171
+Charteris Bay Paradise Beach,CAUTION,0.5,1.0,0.667,3
+Charteris Bay Paradise Beach,EXCEED,1.0,1.0,1.0,5
+Church Bay Beach,SAFE,0.977,0.988,0.983,171
+Church Bay Beach,CAUTION,0.75,0.6,0.667,5
+Church Bay Beach,EXCEED,0.75,0.667,0.706,9
+Corsair Bay Beach,SAFE,0.979,0.979,0.979,188
+Corsair Bay Beach,CAUTION,0.455,0.625,0.526,8
+Corsair Bay Beach,EXCEED,1.0,0.85,0.919,20
+Diamond Harbour Beach,SAFE,0.983,0.96,0.971,177
+Diamond Harbour Beach,CAUTION,0.375,0.375,0.375,8
+Diamond Harbour Beach,EXCEED,0.632,0.8,0.706,15
+Duvauchelle Bay by camping ground,SAFE,1.0,0.983,0.992,180
+Duvauchelle Bay by camping ground,CAUTION,0.667,0.8,0.727,5
+Duvauchelle Bay by camping ground,EXCEED,0.833,1.0,0.909,10
+French Farm Bay,SAFE,1.0,0.982,0.991,170
+French Farm Bay,CAUTION,0.4,0.5,0.444,4
+French Farm Bay,EXCEED,0.5,1.0,0.667,2
+Glen Bay boat ramp,SAFE,0.989,0.978,0.984,186
+Glen Bay boat ramp,CAUTION,0.0,0.0,0.0,5
+Glen Bay boat ramp,EXCEED,0.7,1.0,0.824,7
+Governors Bay Sandy Beach,SAFE,0.988,0.958,0.972,166
+Governors Bay Sandy Beach,CAUTION,0.5,0.875,0.636,8
+Governors Bay Sandy Beach,EXCEED,0.824,0.778,0.8,18
+Purau Bay Beach,SAFE,0.99,0.975,0.982,200
+Purau Bay Beach,CAUTION,0.167,0.5,0.25,2
+Purau Bay Beach,EXCEED,0.667,0.615,0.64,13
+Rapaki Bay Beach,SAFE,0.984,0.973,0.978,184
+Rapaki Bay Beach,CAUTION,0.643,0.75,0.692,12
+Rapaki Bay Beach,EXCEED,0.867,0.867,0.867,15
+Scarborough Beach by clock tower,SAFE,0.983,0.983,0.983,234
+Scarborough Beach by clock tower,CAUTION,0.444,0.5,0.471,8
+Scarborough Beach by clock tower,EXCEED,0.727,0.667,0.696,12
+Sumner Beach Surf club,SAFE,0.988,0.988,0.988,168
+Sumner Beach Surf club,CAUTION,0.0,0.0,0.0,2
+Sumner Beach Surf club,EXCEED,0.25,0.5,0.333,2
+Takamatua Bay Boat ramp,SAFE,0.965,0.976,0.971,169
+Takamatua Bay Boat ramp,CAUTION,0.5,0.429,0.462,7
+Takamatua Bay Boat ramp,EXCEED,0.778,0.7,0.737,10
+Taylors Mistake Beach Surf club,SAFE,0.988,0.976,0.982,168
+Taylors Mistake Beach Surf club,CAUTION,0.0,0.0,0.0,2
+Taylors Mistake Beach Surf club,EXCEED,0.0,0.0,0.0,1
+Tikao Bay mid beach,SAFE,0.983,0.983,0.983,172
+Tikao Bay mid beach,CAUTION,0.667,0.444,0.533,9
+Tikao Bay mid beach,EXCEED,0.789,0.938,0.857,16
+Timaru Coast Caroline Bay at Virtue Avenue,SAFE,0.988,0.977,0.983,173
+Timaru Coast Caroline Bay at Virtue Avenue,CAUTION,0.5,0.75,0.6,8
+Timaru Coast Caroline Bay at Virtue Avenue,EXCEED,1.0,0.818,0.9,11
+Timaru Coast at yacht club jetty,SAFE,1.0,0.989,0.994,178
+Timaru Coast at yacht club jetty,CAUTION,0.0,0.0,0.0,1
+Timaru Coast at yacht club jetty,EXCEED,0.75,0.6,0.667,5
+Wainui Beach Wainui Beach,SAFE,0.989,0.967,0.978,182
+Wainui Beach Wainui Beach,CAUTION,0.556,0.625,0.588,8
+Wainui Beach Wainui Beach,EXCEED,0.727,1.0,0.842,8

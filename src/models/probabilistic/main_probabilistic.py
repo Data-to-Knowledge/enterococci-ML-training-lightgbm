@@ -43,7 +43,8 @@ class ProbabilisticForecastingModel:
         self.feature_columns = None
     
         # Initialize the quantile ensemble component using configuration settings
-        self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config)
+        # self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config)
+        self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config["models"]["probabilistic_framework"])
         
         # Placeholders for meta-learner and calibration components
         self.meta_learner = self.config["models"]["probabilistic_framework"].get("meta_learner")
