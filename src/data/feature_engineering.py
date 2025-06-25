@@ -136,23 +136,6 @@ class FeatureEngineer:
 
         return X
 
-    # def lagged_enterococci_features(self, data):
-    #     # Ensure correct data types
-    #     data["DateTime"] = pd.to_datetime(data["DateTime"])
-    #     data["Season"] = data["Season"].astype("category")
-    #     data["SITE_NAME"] = data["SITE_NAME"].astype("category")
-        
-    #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
-        
-    #     # (DO NOT add Site_Season_Average or Site_Historical_Exceedance_Rate here)
-    #     # Restore original order using SITE_NAME and DateTime
-    #     data = data[["SITE_NAME", "DateTime"]].merge(data, on=["SITE_NAME", "DateTime"], how="left")
-
-    #     data.drop(columns=["Season", "YEAR"], inplace=True)
-        
-    #     return data
-
-
     def lagged_enterococci_features(self, data):
         """
         Adds Site Season Average (rolling mean of Enterococci) and 

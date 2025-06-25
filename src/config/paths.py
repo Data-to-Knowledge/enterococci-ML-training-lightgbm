@@ -1,3 +1,4 @@
+
 # config/paths.py
 from pathlib import Path
 

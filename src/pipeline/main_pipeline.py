@@ -19,7 +19,6 @@ from src.utils.logging import setup_logger
 # from src.visualization.forecast_plots import create_forecast_visualizations
 from src.visualization.interactive_plots import create_interactive_forecast_plot
 from src.visualization.dashboard import generate_dashboard
-
 from src.config.paths import (
     TRAINING_DATA_PATH,
     MAIN_CONFIG_PATH
@@ -37,18 +36,6 @@ def parse_args():
     return parser.parse_args()
 
 def run_pipeline(config_path: str, mode: str):
-    # import yaml
-    # import pandas as pd
-    # from pathlib import Path
-    # from src.data.data_loader import DataLoader
-    # from src.data.preprocessing import Preprocessor
-    # from src.data.feature_engineering import FeatureEngineer
-    # from src.models.model_factory import ModelFactory
-    # from src.evaluation.cross_validation import TimeSeriesEvaluator
-    # from src.visualization.interactive_plots import create_interactive_forecast_plot
-    # from src.visualization.dashboard import generate_dashboard
-    # from src.utils.logger import logger
-    # from config.constants import TRAINING_DATA_PATH
 
     # Load configuration
     with open(config_path, "r") as f:
@@ -164,18 +151,72 @@ def run_pipeline(config_path: str, mode: str):
             except Exception as e:
                 logger.error(f"Error generating predictions for {model_name}: {e}")
 
+
+        # Save combined predictions
         output_path = Path(pred_config.get("output_path", "results/predictions.csv"))
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        
         results_df.to_csv(output_path, index=False)
         logger.info(f"All predictions saved to {output_path}")
+        
+        # Generate standard visualizations
+        if pred_config.get("generate_visualizations", True):
+            visualization_path = Path(pred_config.get("visualization_path", "results/visualizations"))
+            visualization_path.mkdir(parents=True, exist_ok=True)
+            
+            # logger.info(f"Generating standard forecast visualizations in {visualization_path}")
+            # vis_files = create_forecast_visualizations(results_df, visualization_path)
+            # logger.info(f"Created {len(vis_files)} visualization files")
+        
+        # Generate interactive visualizations
+        if pred_config.get("generate_interactive_visualizations", True):
+            interactive_path = Path(pred_config.get("interactive_visualization_path", "results/interactive"))
+            interactive_path.mkdir(parents=True, exist_ok=True)
+            
+            logger.info(f"Generating interactive forecast visualizations")
+            
+            # Split data into training and test sets if needed
+            test_data = results_df.copy()
+            train_data = None
 
-        app = generate_dashboard(test_forecast)
+            test_forecast_point = pd.DataFrame()
+            for model_name in model_names:
+                test_forecast_point[model_name] = test_forecast[f"{model_name}"]["predictions"]
 
-        logger.info(f"Interactive visualization saved to {html_path}")
+            test_forecast_point["DateTime"] = results_df["DateTime"]
+            test_forecast_point["SITE_NAME"] = results_df["SITE_NAME"]
+            test_forecast_point["Enterococci"] = results_df["Enterococci"]            
+            
+            # If there's training data specified, load it
+            if "training_prediction_data_path" in pred_config:
+                train_path = Path(pred_config.get("training_prediction_data_path"))
+                if train_path.exists():
+                    train_data = pd.read_csv(train_path)
+                    # Process training data if needed
+                    train_data = preprocessor.clean_data(train_data)
+                    train_data = feature_engineer.engineer_features(train_data)
+                    train_data = preprocessor.transform_catergorical_variable_type(train_data)
+                    logger.info(f"Loaded training predictions from {train_path}")
+            
+            # Create the visualization
+            html_path = interactive_path / "forecast_comparison.html"
+            create_interactive_forecast_plot(
+                test_data=test_forecast_point,
+                train_data=train_data,
+                output_path=html_path,
+                date_column=date_column,
+                site_column=site_column,
+                target_column=target_column
+            )
 
-    return None  # or `return app` if dashboard is used
+            app = generate_dashboard(test_forecast)
 
+            logger.info(f"Interactive visualization saved to {html_path}")
 
+    return app
+
+            
+############### -------------------------------- #############################
 
 # def run_pipeline(config_path: str, mode: str):
 #     # Load configuration
@@ -414,4 +455,4 @@ if __name__ == "__main__":
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")
-    app.run(debug=False, port=8050)
+    app.run(debug=False, port=8501)
