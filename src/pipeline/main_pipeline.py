@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 import sys
 import pandas as pd
-
+import os
 project_root = Path(__file__).resolve().parent.parent.parent  
 sys.path.append(str(project_root))
 
