@@ -38,8 +38,8 @@ def parse_args():
 def run_pipeline(config_path: str, mode: str):
 
     # Load configuration
-    # with open(config_path, "r") as f:
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, "r") as f:
+    # with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     logger.info(f"Starting pipeline in {mode} mode with config from {config_path}")

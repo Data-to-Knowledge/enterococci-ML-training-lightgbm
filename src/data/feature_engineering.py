@@ -169,7 +169,7 @@ class FeatureEngineer:
                     data.at[idx, "Site_Season_Average"] = prior[-5:].mean()
                     # Manual exceedance rate
                     n_prev = len(prior)
-                    n_exceed = (prior >= 280).sum()
+                    n_exceed = (prior > 280).sum()
                     data.at[idx, "Site_Historical_Exceedance_Rate"] = n_exceed / n_prev
                 # else: remain NaN
 

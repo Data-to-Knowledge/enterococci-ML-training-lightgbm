@@ -10,6 +10,7 @@ from sklearn.model_selection import GridSearchCV
 import os
 from mapie.quantile_regression import MapieQuantileRegressor
 from lightgbm import LGBMRegressor
+from sklearn.model_selection import TimeSeriesSplit
 
 
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -55,105 +56,181 @@ logger = setup_logger(__name__)
 
 class ProbabilisticForecastingModel:
     """
-    Main model class for the Probabilistic Forecasting Framework.
+    Probabilistic framework = 3-stage model
+      1)  LightGBM quantile ensemble
+      2)  (optional) point-forecast stacker (“meta-learner”)
+      3)  (optional) interval calibration
     """
     def __init__(self, config: Dict[str, Any]):
-        # ───────────────────────── basic bookkeeping ──────────────────────────
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.config  = config                      # full YAML dictionary
-        self.pf_cfg  = self.config["models"]["probabilistic_framework"]  # ← NEW alias
+        # ─── bookkeeping ──────────────────────────────────────────────────────
+        self.logger  = logging.getLogger(self.__class__.__name__)
+        self.config  = config                       # ← full YAML tree
+        self.pf_cfg  = config["models"]["probabilistic_framework"]  # shortcut
 
-        # If you ever decide to expose these explicitly:
+        # ─── data / feature placeholders ─────────────────────────────────────
         self.target_column   = None
         self.feature_columns = None
 
-        # ───────────────────────── stage-1 quantile models ────────────────────
-        # Pass **only** the PF sub-section to the ensemble constructor
+        # ─── stage-1: quantile models ────────────────────────────────────────
+        # initialise ensemble with ONLY the probabilistic sub-config
         self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(self.pf_cfg)
 
-        # ───────────────────────── stage-2 point-stacker flags ────────────────
-        # These switches now come from pf_cfg so you can flip them via YAML
-        self.meta_learner       = self.pf_cfg.get("meta_learner", False)
-        self.calibration_params = None   # (still optional / placeholder)
+        # ─── stage-2: meta-learner switch & object ───────────────────────────
+        self.use_meta_learner = self.pf_cfg.get("meta_learner", False)  # bool flag
+        self.meta_learner     = None        # will hold fitted lgb.LGBMRegressor
 
+        # ─── stage-3: interval calibration placeholders ─────────────────────
+        self.calibration_params = None      # kept for future conformal modules
 
     def train(self, data: pd.DataFrame) -> None:
         """
-        Train the probabilistic forecasting model.
-        
-        This includes:
-          - Extracting features and target in the same manner as the LightGBM baseline.
-          - Adding a dummy "DateTime" column as required.
-          - Training the quantile ensemble.
-        
-        Args:
-            data: Training data as a DataFrame.
+        Fit the full probabilistic-forecasting pipeline.
+
+        Stage-1  →  one LightGBM per quantile
+        Stage-2  →  optional LightGBM stacker (meta-learner)
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Feature-engineered training set that already contains the target.
         """
-        self.logger.info("Starting training of Probabilistic Forecasting Model.")
-        data.to_csv("data/processed/training_data.csv", index=False)
+        self.logger.info("▶︎ Training Probabilistic Forecasting Model …")
 
-        # Extract features and target following the LightGBM benchmark pattern.
-        X = data.drop('Enterococci', axis=1)
-        y = data['Enterococci']
-        X["DateTime"] = 0
-        
-        # Recombine features and target to form a processed DataFrame.
-        self.training_data = pd.concat([X, y], axis=1)
-        
-        # Train the quantile ensemble on the processed data.
-        self.training_oof_quantile_forecast = self.quantile_ensemble.train(self.training_data)
+        # ───────────────────────── 1. Book-keeping ──────────────────────────
+        target_col          = self.config["data"].get("target_column", "Enterococci")
+        self.target_column  = target_col
 
-        self.logger.info("Probabilistic Forecasting Model training complete.")
+        Path("data/processed").mkdir(parents=True, exist_ok=True)
+        data.to_csv("data/processed/training_data.csv", index=False)          # reproducibility
 
+        # ───────────────────────── 2. Add dummy DateTime ────────────────────
+        # (keeps the feature signature identical to what the baseline models expect)
+        train_df            = data.copy()
+        train_df["DateTime"] = 0
+
+        self.training_data  = train_df                                         # keep a copy
+
+        # ───────────────────────── 3. Stage-1: quantile ensemble ────────────
+        self.logger.info("   • Fitting LightGBM quantile ensemble …")
+        self.training_oof_quantile_forecast = self.quantile_ensemble.train(
+            train_df,
+            target_col=target_col             # ← passes the dynamic name to the ensemble
+        )
+
+        # ───────────────────────── 4. Stage-2: stacker (optional) ───────────
+        if self.use_meta_learner:
+            self.logger.info("   • Fitting stacker on OOF quantile forecasts …")
+
+            oof_X = self.training_oof_quantile_forecast.drop(columns=[target_col])
+            oof_y = self.training_oof_quantile_forecast[target_col]
+
+            self._fit_meta_learner(oof_quantiles=oof_X, oof_target=oof_y)
+
+        self.logger.info("✔︎ Probabilistic Forecasting Model training complete.")
+
+
+    # ─────────────────────────────────────────────────────────────
+    # PREDICT
+    # ─────────────────────────────────────────────────────────────
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Generate predictions using the probabilistic forecasting model.
-        
-        This method:
-          - Adds a dummy "DateTime" column as in the baseline.
-          - Obtains quantile predictions from the ensemble.
-          - Uses the median quantile as the point forecast.
-        
-        Args:
-            X: Feature DataFrame for prediction.
-        
-        Returns:
-            A DataFrame containing quantile predictions and a column 'point_forecast'.
-        """
-        self.logger.info("Generating predictions using the Probabilistic Forecasting Model.")
-        
-        # Mimic the baseline by adding a "DateTime" column.
-        X = X.copy()  # Avoid modifying the original DataFrame.
-        X["DateTime"] = 0
-        
-        # Obtain quantile predictions from the ensemble
-        quantile_preds = self.quantile_ensemble.predict(X)
-        
-        # Apply enterococci constraints (e.g., non-negativity, upper bounds)
-        quantile_preds = self.apply_enterococci_constraints(quantile_preds)
-        self.training_oof_quantile_forecast = self.apply_enterococci_constraints(self.training_oof_quantile_forecast)
-        
-        # Calibrate prediction intervals
-        lower_prediction_interval, upper_prediction_interval  = self.calibrate_intervals(quantile_preds, X)
-        # print(lower_prediction_interval)
-        # print(upper_prediction_interval)
-        
-        # Generate point forecast using the meta-learner
-        if self.meta_learner:
-            point_forecast = self.apply_meta_learner(self.training_oof_quantile_forecast, quantile_preds)
-        else:
-            point_forecast = self.apply_average_quantile(quantile_preds)
+        Generate probabilistic and point forecasts.
 
-        quantile_preds = self.monotonic_sort_quantiles(quantile_preds, quantile_preds.columns)
-        
-        # Append point forecast to quantile predictions
+        Steps
+        -----
+        1.  Add dummy “DateTime” column (LightGBM-compat).
+        2.  Use the trained quantile ensemble to get the 12 quantile
+            predictions for every row in *X*.
+        3.  If the meta-learner is enabled *and* fitted, use it to
+            produce the point forecast; otherwise fall back to the
+            median of the quantiles.
+        4.  Enforce domain constraints and return a DataFrame that
+            contains:
+                • q_0.20 … q_0.975   (12 columns)
+                • predictions         (point forecast column)
+        """
+        self.logger.info("Generating forecasts with ProbabilisticFramework")
+
+        # 1️⃣ make a copy & inject dummy DateTime
+        X = X.copy()
+        X["DateTime"] = 0
+
+        # 2️⃣ stage-1: quantile forecasts
+        quantile_preds = self.quantile_ensemble.predict(X)
+        quantile_preds = self.apply_enterococci_constraints(quantile_preds)
+        quantile_preds = self.monotonic_sort_quantiles(
+            quantile_preds, quantile_preds.columns
+        )
+
+        # 3️⃣ stage-2: point forecast (stacker if available)
+        if self.use_meta_learner and getattr(self, "meta_learner", None) is not None:
+            point_forecast = pd.Series(
+                self.meta_learner.predict(quantile_preds),
+                index=quantile_preds.index,
+                name="predictions",
+            )
+        else:
+            # graceful fallback → median of the 12 quantiles
+            point_forecast = quantile_preds.median(axis=1).rename("predictions")
+
+        # 4️⃣ assemble output & final constraints
         results = quantile_preds.copy()
         results["predictions"] = point_forecast
-        
-        # Ensure final results also satisfy enterococci constraints
         results = self.apply_enterococci_constraints(results)
-        
+
         return results
+
+
+
+    # def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+    #     """
+    #     Generate predictions using the probabilistic forecasting model.
+        
+    #     This method:
+    #       - Adds a dummy "DateTime" column as in the baseline.
+    #       - Obtains quantile predictions from the ensemble.
+    #       - Uses the median quantile as the point forecast.
+        
+    #     Args:
+    #         X: Feature DataFrame for prediction.
+        
+    #     Returns:
+    #         A DataFrame containing quantile predictions and a column 'point_forecast'.
+    #     """
+    #     self.logger.info("Generating predictions using the Probabilistic Forecasting Model.")
+        
+    #     # Mimic the baseline by adding a "DateTime" column.
+    #     X = X.copy()  # Avoid modifying the original DataFrame.
+    #     X["DateTime"] = 0
+        
+    #     # Obtain quantile predictions from the ensemble
+    #     quantile_preds = self.quantile_ensemble.predict(X)
+        
+    #     # Apply enterococci constraints (e.g., non-negativity, upper bounds)
+    #     quantile_preds = self.apply_enterococci_constraints(quantile_preds)
+    #     self.training_oof_quantile_forecast = self.apply_enterococci_constraints(self.training_oof_quantile_forecast)
+        
+    #     # Calibrate prediction intervals
+    #     lower_prediction_interval, upper_prediction_interval  = self.calibrate_intervals(quantile_preds, X)
+    #     # print(lower_prediction_interval)
+    #     # print(upper_prediction_interval)
+        
+    #     # Generate point forecast using the meta-learner
+    #     if self.meta_learner:
+    #         point_forecast = self.apply_meta_learner(self.training_oof_quantile_forecast, quantile_preds)
+    #     else:
+    #         point_forecast = self.apply_average_quantile(quantile_preds)
+
+    #     quantile_preds = self.monotonic_sort_quantiles(quantile_preds, quantile_preds.columns)
+        
+    #     # Append point forecast to quantile predictions
+    #     results = quantile_preds.copy()
+    #     results["predictions"] = point_forecast
+        
+    #     # Ensure final results also satisfy enterococci constraints
+    #     results = self.apply_enterococci_constraints(results)
+        
+    #     return results
 
     
     # def apply_meta_learner(self, train_quantile_preds: pd.DataFrame, test_quantile_preds: pd.DataFrame) -> pd.Series:
@@ -216,89 +293,101 @@ class ProbabilisticForecastingModel:
         
     #     return meta_learn_preds
 
-    # ─────────────────────────────  META-LEARNER  ────────────────────────────
-    def apply_meta_learner(
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # PRIVATE: train the stacker / meta-learner on OOF quantile predictions
+    # ─────────────────────────────────────────────────────────────────────────────
+    
+# ---------------------------------------------------------------------------
+# helper : fit the LightGBM stacker on OOF quantile predictions
+# ---------------------------------------------------------------------------
+    def _fit_meta_learner(
         self,
-        train_quantile_preds: pd.DataFrame,
-        test_quantile_preds:  pd.DataFrame
-    ) -> pd.Series:
+        oof_quantiles: pd.DataFrame,
+        oof_target:    pd.Series
+    ) -> None:
         """
-        Train a second-stage LightGBM on the quantile table and produce
-        point forecasts for the *test* rows.
+        Fit (or re-fit) the point-forecast stacker.
 
         Parameters
         ----------
-        train_quantile_preds : pd.DataFrame
-            Out-of-fold (or full-sample) quantile predictions **plus** the
-            observed target column ``Enterococci``.
-        test_quantile_preds  : pd.DataFrame
-            Quantile predictions for the rows we want point forecasts for.
-
-        Returns
-        -------
-        pd.Series
-            The meta-learner’s point forecast; index aligned with
-            ``test_quantile_preds``.
+        oof_quantiles : pd.DataFrame
+            K quantile predictions from stage-1 models.
+        oof_target    : pd.Series
+            Ground-truth Enterococci counts for the same rows.
         """
-        self.logger.info("🟢  Training LightGBM stacker for point forecast")
+        self.logger.info("      ↳ training LGBM stacker on %d rows …",
+                        len(oof_target))
 
-        # ── 1️⃣  Build the meta-learner training set ─────────────────────────
-        X_meta = train_quantile_preds.drop(columns=["Enterococci"])
-        y_meta = train_quantile_preds["Enterococci"].astype(float)
+        # ── configuration --------------------------------------------------------
+        pf_cfg          = self.config["models"]["probabilistic_framework"]
+        stack_params    = pf_cfg.get("meta_learner_params", {})
+        exceed_cutoff   = pf_cfg.get("exceedance_cutoff", 280)
+        early_rounds    = pf_cfg.get("meta_learner_early_stopping_rounds", 40)
+        valid_frac      = pf_cfg.get("meta_learner_valid_fraction", 0.15)
+        random_state    = pf_cfg.get("random_state", 42)
 
-        # Ensure the same columns/order are fed at prediction time
-        X_test = test_quantile_preds[X_meta.columns]
+        # sensible defaults (over-written by YAML, if present)
+        default_params = dict(
+            n_estimators      = 400,
+            learning_rate     = 0.03,
+            num_leaves        = 64,
+            min_data_in_leaf  = 20,
+            subsample         = 0.8,    # bagging_fraction
+            colsample_bytree  = 0.8,
+            reg_lambda        = 1.0,
+            boosting_type     = "gbdt",
+            max_bin           = 255,
+            random_state      = random_state,
+            verbose           = -1,
+        )
+        default_params.update(stack_params)
+        stack_params = default_params
 
-        # ── 2️⃣  Pick hyper-parameters  (grid-search optional) ───────────────
-        if self.pf_cfg.get("meta_learner_tune", False):
-            self.logger.info("🔍  Grid-searching stacker hyper-parameters")
+        # ── custom metric : recall on exceedance rows ---------------------------
+        metric_name = f"recall_≥{exceed_cutoff}"
+        def recall_exceed(y_true: np.ndarray, y_pred: np.ndarray):
+            tp = np.logical_and(y_pred >= exceed_cutoff,
+                                y_true >= exceed_cutoff).sum()
+            fn = np.logical_and(y_pred <  exceed_cutoff,
+                                y_true >= exceed_cutoff).sum()
+            recall = tp / (tp + fn + 1e-12)
+            # return (name, value, higher_is_better)
+            return metric_name, recall, True
 
-            param_grid = {
-                "n_estimators":      [120, 180, 240, 300],
-                "learning_rate":     [0.02, 0.05, 0.08],
-                "num_leaves":        [31, 63, 127],
-                "min_data_in_leaf":  [5, 10, 20],
-                "colsample_bytree":  [0.7, 0.8, 0.9],
-                "reg_lambda":        [0.1, 0.5, 1.0]
-            }
-
-            gs = GridSearchCV(
-                lgb.LGBMRegressor(objective="regression", verbose=-1),
-                param_grid   = param_grid,
-                cv           = 5,
-                scoring      = "neg_mean_absolute_error",
-                n_jobs       = -1
-            )
-            gs.fit(X_meta, y_meta)
-            best_params = gs.best_params_
-            self.logger.info(f"✔️  Best stacker params: {best_params}")
-            self.meta_learner = gs.best_estimator_
-
-        else:
-            meta_params = self.pf_cfg.get("meta_learner_params", {})
-            self.logger.info(f"⚙️  Using stacker params from YAML: {meta_params}")
-            self.meta_learner = lgb.LGBMRegressor(
-                objective="regression",
-                verbose   = -1,
-                **meta_params
-            )
-            self.meta_learner.fit(X_meta, y_meta)
-
-        # ── 3️⃣  Predict & post-process ──────────────────────────────────────
-        stacked_preds = self.meta_learner.predict(X_test)
-        stacked_preds = pd.Series(
-            stacked_preds,
-            index = test_quantile_preds.index,
-            name  = "predictions"
+        # ── simple hold-out split for early-stopping ----------------------------
+        from sklearn.model_selection import train_test_split
+        X_tr, X_val, y_tr, y_val = train_test_split(
+            oof_quantiles, oof_target,
+            test_size   = valid_frac,
+            random_state = random_state,
+            shuffle     = True,
         )
 
-        # Domain constraints (≥ 5 MPN/100 mL, integer)
-        stacked_preds = self.apply_enterococci_constraints(stacked_preds)
+        # ── fit the stacker -----------------------------------------------------
+        self.meta_learner = lgb.LGBMRegressor(**stack_params)
 
-        self.logger.info("✅  Point forecasts produced via meta-learner")
-        return stacked_preds
+        self.meta_learner.fit(
+            X_tr, y_tr,
+            eval_set   = [(X_val, y_val)],
+            eval_metric= recall_exceed,
+            callbacks  = [lgb.early_stopping(early_rounds, verbose=False)],
+        )
+
+        # ── log best iteration & metric ----------------------------------------
+        best_iter = getattr(self.meta_learner, "best_iteration_", None)
+        # best_score_ looks like: {'training': {'recall_≥280': …},
+        #                          'valid_0' : {'recall_≥280': …}}
+        best_rec  = (self.meta_learner.best_score_
+                    .get("valid_0", {})
+                    .get(metric_name, np.nan))
+
+        self.logger.info("      ✓ stacker fitted – best_iter=%s  %s=%.4f",
+                        str(best_iter), metric_name, best_rec)
 
 
+    
+    
     def apply_average_quantile(self, quantile_preds: pd.DataFrame) -> pd.Series:
         """
         Combine the quantile predictions using a meta-learner to produce a point forecast.
@@ -349,12 +438,12 @@ class ProbabilisticForecastingModel:
 
         return lower_pred_test, upper_pred_test
         
-    def apply_enterococci_constraints(self, predictions):
-        # Apply minimum value of 5 MPN/100mL
-        constrained = np.maximum(predictions, 5)
-        # Round to nearest integer
-        constrained = np.round(constrained)
-        return constrained
+    def apply_enterococci_constraints(self, preds: pd.DataFrame | pd.Series):
+        """ clip at 5 MPN/100 mL and round to int """
+        clipped = np.maximum(preds, 5).round()        # ← NumPy outputs ndarray
+        return pd.DataFrame(clipped, index=preds.index,
+                            columns=getattr(preds, "columns", None))
+
     
     def monotonic_sort_quantiles(self, df, quantile_columns):
         for index, row in df.iterrows():

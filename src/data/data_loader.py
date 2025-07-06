@@ -51,3 +51,6 @@ class DataLoader:
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
         
+        # with open(config_path, "r", encoding="utf-8") as f:
+        #     return yaml.safe_load(f)
+        

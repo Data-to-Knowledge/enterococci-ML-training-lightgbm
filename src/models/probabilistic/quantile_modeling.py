@@ -44,76 +44,76 @@ class ProbabilisticQuantileEnsembleModel:
         # Dictionary to hold the trained LightGBM models keyed by quantile level.
         self.models: Dict[float, lgb.LGBMRegressor] = {}
 
-
-    def train(self, data: pd.DataFrame) -> None:
+    def train(self, data: pd.DataFrame, *, target_col: str = "Enterococci") -> pd.DataFrame:
         """
-        Train an ensemble of quantile regression models.
-        
-        Args:
-            data: The training data as a DataFrame.
-                  It must include the target column and feature columns.
+        Train all LightGBM quantile models and return an out-of-fold (OOF)
+        DataFrame that already **includes the target column** under the same
+        name you pass in (default "Enterococci").
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Feature-engineered training set **with** the target.
+        target_col : str, optional
+            Column name of the target.  Defaults to "Enterococci" so existing
+            pipelines continue to run unchanged.
         """
-        self.logger.info("Starting training for Probabilistic Quantile Ensemble Model.")
+        self.target_column = target_col      # <- remember it
 
-        eval_results = {}
-        
-        # Determine feature columns if not explicitly provided.
-        if self.feature_columns is None:
-            self.feature_columns = [col for col in data.columns if col != self.target_column]
-        
-        X = data.drop('Enterococci', axis=1)  # Adjust column name if needed
-        y = data['Enterococci']  # Adjust column name if needed
-        
-        # Train a separate LightGBM model for each specified quantile.
-        for quantile in self.quantile_levels:
-            self.logger.info(f"Training LightGBM quantile model for quantile: {quantile:.2f}")
-            # Create a copy of the parameters and update for quantile objective.
-            params = self.params.copy()
-            params['objective'] = 'quantile'
-            params['alpha'] = quantile
-            
-            model = lgb.LGBMRegressor(**params, verbose=-1)
-            model.fit(X, y,
-                eval_set=[(X, y)],
-                eval_metric='l1',
-                eval_names=['train'],
-                callbacks=[lgb.record_evaluation(eval_results)])    
-            self.models[quantile] = model
-        
-        self.logger.info("Completed training quantile ensemble on full data.")
+        # ───── split X / y ────────────────────────────────────────────────────
+        X = data.drop(columns=[target_col]).copy()
+        y = data[target_col].copy()
 
-        # Generate out-of-fold predictions using k-fold CV.
+        # ---------------------------------------------------------------------
+        # 1️⃣  Fit a LightGBM quantile model per quantile on the *full* data
+        # ---------------------------------------------------------------------
+        for q in self.quantile_levels:
+            self.logger.info("• fitting LightGBM for q=%.3f", q)
+            params = {**self.params,
+                    "objective": "quantile",
+                    "alpha":     q,
+                    "verbose":  -1}
+            gbm = lgb.LGBMRegressor(**params)
+            gbm.fit(X, y)
+            self.models[q] = gbm
+
+        # ---------------------------------------------------------------------
+        # 2️⃣  Build out-of-fold predictions (needed by the meta-learner)
+        # ---------------------------------------------------------------------
         from sklearn.model_selection import KFold
-        n_splits = 2  # Number of splits for k-fold CV
-        kf = KFold(n_splits=n_splits, shuffle=True, random_state=None)
 
-        # Prepare an empty DataFrame to store OOF predictions.
+        n_splits = 2
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+
         oof_preds = pd.DataFrame(index=data.index)
 
-        for quantile in self.quantile_levels:
-            self.logger.info(f"Generating out-of-fold predictions for quantile: {quantile:.2f}")
-            params = self.params.copy()
-            params['objective'] = 'quantile'
-            params['alpha'] = quantile
+        for q in self.quantile_levels:
+            col = f"q_{q}"
+            oof_col = np.full(len(data), np.nan)
 
-            oof_pred = np.full(len(data), np.nan)
-            for train_idx, val_idx in kf.split(X):
-                X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
-                y_train = y.iloc[train_idx]
-                model_cv = lgb.LGBMRegressor(**params, verbose=-1)
-                model_cv.fit(X_train, y_train)
-                oof_pred[val_idx] = model_cv.predict(X_val)
-            oof_preds[f"q_{quantile}"] = oof_pred
+            params = {**self.params,
+                    "objective": "quantile",
+                    "alpha":     q,
+                    "verbose":  -1}
 
-        # Combine the out-of-fold predictions with the original training data.
-        # final_oof_df = data.copy()
-        # final_oof_df = pd.concat([final_oof_df, oof_preds], axis=1)
-        final_oof_df = oof_preds.copy()
-        final_oof_df["Enterococci"] = y
+            for tr_idx, val_idx in kf.split(X):
+                gbm = lgb.LGBMRegressor(**params)
+                gbm.fit(X.iloc[tr_idx], y.iloc[tr_idx])
+                oof_col[val_idx] = gbm.predict(X.iloc[val_idx])
 
-        self.logger.info("Out-of-fold predictions generated successfully.")
+            # any rows never used as a validation fold? → fall back to full-data model
+            nan_mask = np.isnan(oof_col)
+            if nan_mask.any():
+                oof_col[nan_mask] = self.models[q].predict(X.iloc[nan_mask])
 
-        return final_oof_df
+            oof_preds[col] = oof_col
+
+        # ---------------------------------------------------------------------
+        # 3️⃣  Package OOF preds *together with the target* and return
+        # ---------------------------------------------------------------------
+        oof_preds[target_col] = y.values
+        return oof_preds
+
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
