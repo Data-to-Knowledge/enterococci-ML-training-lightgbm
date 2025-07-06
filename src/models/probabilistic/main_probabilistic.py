@@ -9,6 +9,8 @@ import lightgbm as lgb
 from sklearn.model_selection import GridSearchCV
 import os
 from mapie.quantile_regression import MapieQuantileRegressor
+from lightgbm import LGBMRegressor
+
 
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(project_root))
@@ -19,36 +21,61 @@ from src.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 
+# class ProbabilisticForecastingModel:
+#     """
+#     Main model class for the Probabilistic Forecasting Framework.
+    
+#     This model first trains an ensemble of LightGBM quantile regression models (stage 1).
+#     It then (optionally) uses a meta-learner to produce a point forecast and calibrates the prediction 
+#     intervals (stages 2 and 3). Currently, the meta-learner and calibration are placeholders; for 
+#     now, the point forecast is derived from the median quantile.
+    
+#     This class implements the standard interface (train, predict, save, load) so that it integrates seamlessly
+#     with the main pipeline.
+#     """
+#     def __init__(self, config: Dict[str, Any]):
+#         self.logger = logging.getLogger(self.__class__.__name__)
+#         self.config = config
+        
+#         # Data settings from configuration
+#         # self.target_column = config["data"].get("target_column", "Enterococci")
+#         # self.feature_columns = config["data"].get("feature_columns", None)
+
+#         self.target_column = None
+#         self.feature_columns = None
+    
+#         # Initialize the quantile ensemble component using configuration settings
+#         # self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config)
+#         self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config["models"]["probabilistic_framework"])
+        
+#         # Placeholders for meta-learner and calibration components
+#         self.meta_learner = self.config["models"]["probabilistic_framework"].get("meta_learner")
+#         self.calibration_params = None
+
+
 class ProbabilisticForecastingModel:
     """
     Main model class for the Probabilistic Forecasting Framework.
-    
-    This model first trains an ensemble of LightGBM quantile regression models (stage 1).
-    It then (optionally) uses a meta-learner to produce a point forecast and calibrates the prediction 
-    intervals (stages 2 and 3). Currently, the meta-learner and calibration are placeholders; for 
-    now, the point forecast is derived from the median quantile.
-    
-    This class implements the standard interface (train, predict, save, load) so that it integrates seamlessly
-    with the main pipeline.
     """
     def __init__(self, config: Dict[str, Any]):
+        # ───────────────────────── basic bookkeeping ──────────────────────────
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.config = config
-        
-        # Data settings from configuration
-        # self.target_column = config["data"].get("target_column", "Enterococci")
-        # self.feature_columns = config["data"].get("feature_columns", None)
+        self.config  = config                      # full YAML dictionary
+        self.pf_cfg  = self.config["models"]["probabilistic_framework"]  # ← NEW alias
 
-        self.target_column = None
+        # If you ever decide to expose these explicitly:
+        self.target_column   = None
         self.feature_columns = None
-    
-        # Initialize the quantile ensemble component using configuration settings
-        # self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config)
-        self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(config["models"]["probabilistic_framework"])
-        
-        # Placeholders for meta-learner and calibration components
-        self.meta_learner = self.config["models"]["probabilistic_framework"].get("meta_learner")
-        self.calibration_params = None
+
+        # ───────────────────────── stage-1 quantile models ────────────────────
+        # Pass **only** the PF sub-section to the ensemble constructor
+        self.quantile_ensemble = ProbabilisticQuantileEnsembleModel(self.pf_cfg)
+
+        # ───────────────────────── stage-2 point-stacker flags ────────────────
+        # These switches now come from pf_cfg so you can flip them via YAML
+        self.meta_learner       = self.pf_cfg.get("meta_learner", False)
+        self.calibration_params = None   # (still optional / placeholder)
+
 
     def train(self, data: pd.DataFrame) -> None:
         """
@@ -129,66 +156,149 @@ class ProbabilisticForecastingModel:
         return results
 
     
-    def apply_meta_learner(self, train_quantile_preds: pd.DataFrame, test_quantile_preds: pd.DataFrame) -> pd.Series:
-        """
-        Combine the quantile predictions using a meta-learner to produce a point forecast.
-        Future implementation: Use a gradient boosting model or another ensemble method to combine
-        quantile predictions.
+    # def apply_meta_learner(self, train_quantile_preds: pd.DataFrame, test_quantile_preds: pd.DataFrame) -> pd.Series:
+    #     """
+    #     Combine the quantile predictions using a meta-learner to produce a point forecast.
+    #     Future implementation: Use a gradient boosting model or another ensemble method to combine
+    #     quantile predictions.
         
-        Currently, as a placeholder, we use the median of the quantile predictions.
+    #     Currently, as a placeholder, we use the median of the quantile predictions.
+    #     """
+    #     self.logger.info("Training meta-learner for point forecast.")
+
+    #     # Prepare meta-learning data.
+    #     X_meta = train_quantile_preds.drop('Enterococci', axis=1)
+    #     y_meta = train_quantile_preds['Enterococci']
+
+    #     # Check if tuning is enabled via config.
+    #     if self.config.get("meta_learner_tune", False):
+    #         self.logger.info("Performing grid search tuning for meta-learner.")
+    #         param_grid = {
+    #             "n_estimators": [100, 150, 180, 200, 250],
+    #             "learning_rate": [0.01, 0.05, 0.087, 0.1, 0.15],
+    #             "num_leaves": [20, 30, 40, 50, 60],
+    #             "min_data_in_leaf": [3, 5, 10, 20],
+    #             "colsample_bytree": [0.7, 0.8, 0.9, 0.958, 1.0],
+    #             "reg_lambda": [0.1, 0.5, 0.654, 1.0, 2.0]
+    #         }
+    #         grid_search = GridSearchCV(
+    #             estimator=lgb.LGBMRegressor(verbose=-1),
+    #             param_grid=param_grid,
+    #             cv=5,
+    #             scoring="neg_mean_absolute_error",
+    #             n_jobs=-1
+    #         )
+    #         grid_search.fit(X_meta, y_meta)
+    #         best_params = grid_search.best_params_
+    #         self.logger.info(f"Best meta-learner parameters: {best_params}")
+    #         self.meta_learner = grid_search.best_estimator_
+    #     else:
+    #         # Use parameters from config or default values.
+    #         meta_params = self.config.get("meta_learner_params", {
+    #             "n_estimators": 180,
+    #             "learning_rate": 0.08721057029770096,
+    #             "num_leaves": 40,
+    #             "min_data_in_leaf": 5,
+    #             "colsample_bytree": 0.9587602766121369,
+    #             "reg_lambda": 0.6540961177848345,
+    #             "boosting_type": "gbdt"
+    #         })
+    #         self.logger.info(f"Using meta-learner parameters: {meta_params}")
+    #         self.meta_learner = lgb.LGBMRegressor(**meta_params, verbose=-1)
+    #         self.meta_learner.fit(X_meta, y_meta)
+        
+    #     # Predict using the meta-learner.
+    #     meta_learn_preds = self.meta_learner.predict(test_quantile_preds)
+    #     meta_learn_preds = pd.Series(meta_learn_preds, index=test_quantile_preds.index, name="predictions")
+        
+    #     # Apply enterococci constraints (ensuring domain-specific output bounds).
+    #     meta_learn_preds = self.apply_enterococci_constraints(meta_learn_preds)
+        
+    #     return meta_learn_preds
+
+    # ─────────────────────────────  META-LEARNER  ────────────────────────────
+    def apply_meta_learner(
+        self,
+        train_quantile_preds: pd.DataFrame,
+        test_quantile_preds:  pd.DataFrame
+    ) -> pd.Series:
         """
-        self.logger.info("Training meta-learner for point forecast.")
+        Train a second-stage LightGBM on the quantile table and produce
+        point forecasts for the *test* rows.
 
-        # Prepare meta-learning data.
-        X_meta = train_quantile_preds.drop('Enterococci', axis=1)
-        y_meta = train_quantile_preds['Enterococci']
+        Parameters
+        ----------
+        train_quantile_preds : pd.DataFrame
+            Out-of-fold (or full-sample) quantile predictions **plus** the
+            observed target column ``Enterococci``.
+        test_quantile_preds  : pd.DataFrame
+            Quantile predictions for the rows we want point forecasts for.
 
-        # Check if tuning is enabled via config.
-        if self.config.get("meta_learner_tune", False):
-            self.logger.info("Performing grid search tuning for meta-learner.")
+        Returns
+        -------
+        pd.Series
+            The meta-learner’s point forecast; index aligned with
+            ``test_quantile_preds``.
+        """
+        self.logger.info("🟢  Training LightGBM stacker for point forecast")
+
+        # ── 1️⃣  Build the meta-learner training set ─────────────────────────
+        X_meta = train_quantile_preds.drop(columns=["Enterococci"])
+        y_meta = train_quantile_preds["Enterococci"].astype(float)
+
+        # Ensure the same columns/order are fed at prediction time
+        X_test = test_quantile_preds[X_meta.columns]
+
+        # ── 2️⃣  Pick hyper-parameters  (grid-search optional) ───────────────
+        if self.pf_cfg.get("meta_learner_tune", False):
+            self.logger.info("🔍  Grid-searching stacker hyper-parameters")
+
             param_grid = {
-                "n_estimators": [100, 150, 180, 200, 250],
-                "learning_rate": [0.01, 0.05, 0.087, 0.1, 0.15],
-                "num_leaves": [20, 30, 40, 50, 60],
-                "min_data_in_leaf": [3, 5, 10, 20],
-                "colsample_bytree": [0.7, 0.8, 0.9, 0.958, 1.0],
-                "reg_lambda": [0.1, 0.5, 0.654, 1.0, 2.0]
+                "n_estimators":      [120, 180, 240, 300],
+                "learning_rate":     [0.02, 0.05, 0.08],
+                "num_leaves":        [31, 63, 127],
+                "min_data_in_leaf":  [5, 10, 20],
+                "colsample_bytree":  [0.7, 0.8, 0.9],
+                "reg_lambda":        [0.1, 0.5, 1.0]
             }
-            grid_search = GridSearchCV(
-                estimator=lgb.LGBMRegressor(verbose=-1),
-                param_grid=param_grid,
-                cv=5,
-                scoring="neg_mean_absolute_error",
-                n_jobs=-1
+
+            gs = GridSearchCV(
+                lgb.LGBMRegressor(objective="regression", verbose=-1),
+                param_grid   = param_grid,
+                cv           = 5,
+                scoring      = "neg_mean_absolute_error",
+                n_jobs       = -1
             )
-            grid_search.fit(X_meta, y_meta)
-            best_params = grid_search.best_params_
-            self.logger.info(f"Best meta-learner parameters: {best_params}")
-            self.meta_learner = grid_search.best_estimator_
+            gs.fit(X_meta, y_meta)
+            best_params = gs.best_params_
+            self.logger.info(f"✔️  Best stacker params: {best_params}")
+            self.meta_learner = gs.best_estimator_
+
         else:
-            # Use parameters from config or default values.
-            meta_params = self.config.get("meta_learner_params", {
-                "n_estimators": 180,
-                "learning_rate": 0.08721057029770096,
-                "num_leaves": 40,
-                "min_data_in_leaf": 5,
-                "colsample_bytree": 0.9587602766121369,
-                "reg_lambda": 0.6540961177848345,
-                "boosting_type": "gbdt"
-            })
-            self.logger.info(f"Using meta-learner parameters: {meta_params}")
-            self.meta_learner = lgb.LGBMRegressor(**meta_params, verbose=-1)
+            meta_params = self.pf_cfg.get("meta_learner_params", {})
+            self.logger.info(f"⚙️  Using stacker params from YAML: {meta_params}")
+            self.meta_learner = lgb.LGBMRegressor(
+                objective="regression",
+                verbose   = -1,
+                **meta_params
+            )
             self.meta_learner.fit(X_meta, y_meta)
-        
-        # Predict using the meta-learner.
-        meta_learn_preds = self.meta_learner.predict(test_quantile_preds)
-        meta_learn_preds = pd.Series(meta_learn_preds, index=test_quantile_preds.index, name="predictions")
-        
-        # Apply enterococci constraints (ensuring domain-specific output bounds).
-        meta_learn_preds = self.apply_enterococci_constraints(meta_learn_preds)
-        
-        return meta_learn_preds
-    
+
+        # ── 3️⃣  Predict & post-process ──────────────────────────────────────
+        stacked_preds = self.meta_learner.predict(X_test)
+        stacked_preds = pd.Series(
+            stacked_preds,
+            index = test_quantile_preds.index,
+            name  = "predictions"
+        )
+
+        # Domain constraints (≥ 5 MPN/100 mL, integer)
+        stacked_preds = self.apply_enterococci_constraints(stacked_preds)
+
+        self.logger.info("✅  Point forecasts produced via meta-learner")
+        return stacked_preds
+
+
     def apply_average_quantile(self, quantile_preds: pd.DataFrame) -> pd.Series:
         """
         Combine the quantile predictions using a meta-learner to produce a point forecast.

@@ -7,6 +7,7 @@ import lightgbm as lgb
 import joblib
 import sys
 
+
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(project_root))
 
