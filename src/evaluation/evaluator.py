@@ -169,6 +169,51 @@ class Evaluator:
                 
         return results
     
+    def evaluate_probabilistic_risk_labels(
+        self,
+        y_true: pd.Series,
+        y_pred: pd.Series,
+        site_names: Optional[pd.Series] = None
+    ) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
+        """
+        Compare lab-measured Enterococci (converted to SAFE/EXCEED) with model-generated risk labels.
+        Returns site-wise metrics if site_names provided, else overall metrics.
+        """
+        def compute_metrics(y_true_labels, y_pred_labels):
+            metrics = {
+                "accuracy": accuracy_score(y_true_labels, y_pred_labels),
+                "recall_safe": recall_score(y_true_labels, y_pred_labels, pos_label="SAFE", zero_division=0),
+                "recall_exceed": recall_score(y_true_labels, y_pred_labels, pos_label="EXCEED", zero_division=0),
+                "precision_safe": precision_score(y_true_labels, y_pred_labels, pos_label="SAFE", zero_division=0),
+                "precision_exceed": precision_score(y_true_labels, y_pred_labels, pos_label="EXCEED", zero_division=0),
+                "f2_exceed": fbeta_score(y_true_labels, y_pred_labels, beta=2, pos_label="EXCEED", zero_division=0)
+            }
+
+            tn, fp, fn, tp = confusion_matrix(
+                y_true_labels, y_pred_labels, labels=["SAFE", "EXCEED"]
+            ).ravel()
+
+            metrics.update({"TP": tp, "TN": tn, "FP": fp, "FN": fn})
+            metrics["sensitivity"] = tp / (tp + fn) if tp + fn else 1.0
+            metrics["specificity"] = tn / (tn + fp) if tn + fp else 1.0
+
+            return metrics
+
+        y_true_labels = y_true.apply(lambda x: "EXCEED" if x >= self.exceedance_threshold else "SAFE")
+
+        if site_names is not None:
+            site_metrics = {}
+            for site in site_names.unique():
+                idx = site_names == site
+                metrics = compute_metrics(y_true_labels[idx], y_pred[idx])
+                site_metrics[site] = metrics
+            return site_metrics
+        else:
+            return compute_metrics(y_true_labels, y_pred)
+
+
+
+    
     def _calculate_wmape(self, y_true: pd.Series, y_pred: np.ndarray) -> float:
         """Calculate Weighted Mean Absolute Percentage Error.
         
@@ -267,6 +312,22 @@ class Evaluator:
         else:
             return 1.0  # No exceedances to detect
     
+    @staticmethod
+    def convert_np_types(obj):
+        """Recursively convert NumPy types to native Python types for JSON serialization."""
+        if isinstance(obj, dict):
+            return {k: Evaluator.convert_np_types(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [Evaluator.convert_np_types(i) for i in obj]
+        elif isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64)):
+            return float(obj)
+        elif isinstance(obj, (np.bool_)):
+            return bool(obj)
+        else:
+            return obj
+    
     def generate_report(self, output_path: Optional[Path] = None) -> Dict[str, Any]:
         """Generate an evaluation report with all results.
         
@@ -331,9 +392,11 @@ class Evaluator:
         if output_path:
             output_path = Path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
+            report_clean = Evaluator.convert_np_types(report)  # <-- Clean up before saving
             with open(output_path, 'w') as f:
-                json.dump(report, f, indent=4)
+                json.dump(report_clean, f, indent=4)
+
             
             logger.info(f"Evaluation report saved to {output_path}")
         
@@ -745,3 +808,10 @@ class Evaluator:
 
         print(colored("------------------------------------------------------------------", 'cyan'))
         print('\n')
+
+
+
+
+
+
+

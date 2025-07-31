@@ -325,7 +325,8 @@ import os
 from mapie.quantile_regression import MapieQuantileRegressor
 from lightgbm import LGBMRegressor
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.isotonic import IsotonicRegression
+from sklearn.isotonic import isotonic_regression, IsotonicRegression
+from scipy.interpolate import PchipInterpolator
 
 
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -418,53 +419,146 @@ class ProbabilisticForecastingModel:
     # ─────────────────────────────────────────────────────────────
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Generate probabilistic and point forecasts.
+        Generate probabilistic and point forecasts with risk evaluation.
 
         Steps
         -----
         1.  Add dummy “DateTime” column (LightGBM-compat).
         2.  Use the trained quantile ensemble to get the 12 quantile
             predictions for every row in *X*.
-        3.  If the meta-learner is enabled *and* fitted, use it to
-            produce the point forecast; otherwise fall back to the
-            median of the quantiles.
-        4.  Enforce domain constraints and return a DataFrame that
-            contains:
-                • q_0.20 … q_0.975   (12 columns)
-                • predictions         (point forecast column)
+        3.  Apply isotonic regression to enforce monotonicity of quantiles.
+        4.  Compute point forecast as median of isotonic quantiles.
+        5.  Compute exceedance probability from CDF.
+        6.  Assign risk label based on exceedance probability.
+        7.  Return a DataFrame with:
+                • q_0.20 … q_0.975       (12 columns)
+                • predictions            (point forecast)
+                • prob_exceed_280        (float)
+                • risk_label             (str: SAFE or EXCEED)
         """
-        self.logger.info("Generating forecasts with ProbabilisticFramework")
+        self.logger.info("Generating forecasts with ProbabilisticFramework (training logic)")
 
-        # 1️⃣ make a copy & inject dummy DateTime
+        # 1️⃣ Dummy DateTime injection
         X = X.copy()
         X["DateTime"] = 0
+        THRESHOLD_PROB = 0.18
 
-        # 2️⃣ stage-1: quantile forecasts
-        quantile_preds = self.quantile_ensemble.predict(X)
-        quantile_preds = self.apply_enterococci_constraints(quantile_preds)
-        # quantile_preds = self.monotonic_sort_quantiles(
-        #     quantile_preds, quantile_preds.columns
-        # )
+        # 2️⃣ Stage-1: quantile forecasts (raw)
+        q_raw = self.quantile_ensemble.predict(X)
+        q_raw = self.apply_enterococci_constraints(q_raw)
 
-        quantile_preds = self.apply_isotonic_monotonicity(quantile_preds)
+        # 3️⃣ Stage-2: isotonic monotonicity fix
+        q_iso = self.apply_isotonic_monotonicity(q_raw.copy())
 
-        # 3️⃣ stage-2: point forecast (stacker if available)
-        if self.use_meta_learner and getattr(self, "meta_learner", None) is not None:
-            point_forecast = pd.Series(
-                self.meta_learner.predict(quantile_preds),
-                index=quantile_preds.index,
-                name="predictions",
-            )
-        else:
-            # graceful fallback → median of the 12 quantiles
-            point_forecast = quantile_preds.median(axis=1).rename("predictions")
+        # 4️⃣ Point forecast: median of isotonic grid
+        point_forecast = q_iso.median(axis=1).rename("predictions")
 
-        # 4️⃣ assemble output & final constraints
-        results = quantile_preds.copy()
+        # 5️⃣ Exceedance probability: P(y > 280) from monotonic CDF
+        q_cols = q_iso.columns.tolist()  # assumes q_0.20 … q_0.975
+        taus = np.array([float(c.split("_")[1]) for c in q_cols])
+
+        prob_unsafe = ProbabilisticForecastingModel.prob_exceed_vectorised(q_iso[q_cols].to_numpy(float), taus, 280.0)
+
+        # 6️⃣ Risk label from exceedance prob (threshold = 0.10 default logic)
+        risk = np.where(prob_unsafe >= THRESHOLD_PROB, "EXCEED", "SAFE")
+
+        # 7️⃣ Assemble final DataFrame
+        results = q_iso.copy()
         results["predictions"] = point_forecast
-        results = self.apply_enterococci_constraints(results)
+        results["prob_exceed_280"] = prob_unsafe
+        results["risk_label"] = risk
+
+        # Final: clamp concentration predictions
+        results[q_cols + ["predictions"]] = self.apply_enterococci_constraints(
+            results[q_cols + ["predictions"]]
+        )
+
+        results.to_csv("training_forecasts.csv", index=False)
+
 
         return results
+
+
+### using isotonic monotonicity from scikit learn (working version)
+
+    # def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+    #     """
+    #     Generate probabilistic and point forecasts.
+
+    #     Steps
+    #     -----
+    #     1.  Add dummy “DateTime” column (LightGBM-compat).
+    #     2.  Use the trained quantile ensemble to get the 12 quantile
+    #         predictions for every row in *X*.
+    #     3.  Apply isotonic regression to enforce monotonicity of quantiles.
+    #     4.  Compute point forecast as median of isotonic quantiles.
+    #     5.  Return a DataFrame with:
+    #             • q_0.20 … q_0.975       (12 columns)
+    #             • predictions            (point forecast)
+    #     """
+    #     self.logger.info("Generating forecasts with ProbabilisticFramework (training logic)")
+
+    #     # 1️⃣ Dummy DateTime injection
+    #     X = X.copy()
+    #     X["DateTime"] = 0
+
+    #     # 2️⃣ Stage-1: quantile forecasts (raw)
+    #     q_raw = self.quantile_ensemble.predict(X)
+    #     q_raw = self.apply_enterococci_constraints(q_raw)
+
+    #     # 3️⃣ Stage-2: isotonic monotonicity fix
+    #     q_iso = self.apply_isotonic_monotonicity(q_raw.copy())
+
+    #     # 4️⃣ Point forecast: median of isotonic grid
+    #     point_forecast = q_iso.median(axis=1).rename("predictions")
+
+    #     # 5️⃣ Assemble final DataFrame
+    #     results = q_iso.copy()
+    #     results["predictions"] = point_forecast
+
+    #     # Final: clamp concentration predictions
+    #     q_cols = q_iso.columns.tolist()
+    #     results[q_cols + ["predictions"]] = self.apply_enterococci_constraints(
+    #         results[q_cols + ["predictions"]]
+    #     )
+
+    #     results.to_csv("training_forecasts.csv", index=False)
+
+    #     return results
+
+
+# #### monotone spline version with isotonic regression and then PCHIP spline through the plateau knots
+#     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+#         """
+#         Generate probabilistic and point forecasts using the 2-step
+#         PAVA → monotone-spline correction instead of plain isotonic.
+#         """
+#         self.logger.info("Generating forecasts with ProbabilisticFramework (mono-spline)")
+
+#         # 1️⃣ Dummy DateTime
+#         X = X.copy()
+#         X["DateTime"] = 0
+
+#         # 2️⃣ Raw quantile ensemble outputs
+#         q_raw = self.quantile_ensemble.predict(X)
+#         q_raw = self.apply_enterococci_constraints(q_raw)
+
+#         # 3️⃣ Two-step monotone smoothing spline
+#         q_smooth = self._apply_monotone_spline(q_raw)
+
+#         # 4️⃣ Point forecast: median of smoothed grid
+#         point_forecast = q_smooth.median(axis=1).rename("predictions")
+
+#         # 5️⃣ Assemble & final clamp
+#         results = q_smooth.copy()
+#         results["predictions"] = point_forecast
+
+#         cols = q_smooth.columns.tolist() + ["predictions"]
+#         results[cols] = self.apply_enterococci_constraints(results[cols])
+
+#         return results
+
+    
 
     
 # ---------------------------------------------------------------------------
@@ -606,12 +700,114 @@ class ProbabilisticForecastingModel:
 
 
         return lower_pred_test, upper_pred_test
+    
+    @staticmethod
+    def prob_exceed_vectorised(Q: np.ndarray, p: np.ndarray, y_threshold: float, debug=False) -> np.ndarray:
+        """
+        Vectorised piece-wise linear CDF inversion.
+        Parameters
+        ----------
+        Q : ndarray, shape (n_obs, n_q)
+            Quantile predictions per row, ASCENDING in τ. (one site-hour per observation)
+        p : ndarray, shape (n_q,)
+            Quantile levels (0 < τ < 1), ASCENDING. (like 0.05, 0.2, 0.35, 0.5, 0.6 etc.)
+        y_threshold : float
+            The exceedance threshold (e.g. 280).
+        Returns
+        -------
+        ndarray, shape (n_obs,)
+            P(Y > y_threshold) for each observation.
+        """
+        Q = Q.astype(float, copy=False)          # ensure float maths
+        
+        # n_obs is the number of predictions and n_q is the number of quantiles (12)
+        n_obs, n_q = Q.shape
+
+        ## --- 1. Locate the interval index k s.t. Q_k <= y < Q_{k+1} ----------
+        ## For each row (site-hour), this finds which interval of the predicted quantiles the threshold (280) sits in
+        ## example: If Q = [50, 120, 200, 310, 400] then the threshold of 280 lies between 200 and 310, which means it is at index 2
+
+        idx = (Q < y_threshold).sum(axis=1) - 1       # -1 so that y==Q0 → idx=-1, y==Q1 → idx=0
+        idx = np.clip(idx, 0, n_q - 2)                # keep in range [0, n_q-2], otherwise will be out of bounds
+
+        if debug:
+            print("idx (interval index):", idx[:5])
+
+        # --- 2. Gather bounding quantiles and τ levels ----------------------
+        ## This grabs the two quantile predictions that bracket the threshold (280), and the corresponding quantile levels (p_lo and p_hi)
+        ## We can then interpolate between these to get the probability of exceeding the threshold
+        row = np.arange(n_obs)
+        Q_lo = Q[row, idx]
+        Q_hi = Q[row, idx + 1]
+        p_lo = p[idx]
+        p_hi = p[idx + 1]
+
+        if debug:
+            print("Q_lo  sample:", Q_lo[:5])
+            print("Q_hi  sample:", Q_hi[:5])
+            print("p_lo  sample:", p_lo[:5])
+            print("p_hi  sample:", p_hi[:5])
+
+        # --- 3. Linear interpolation of F(y) --------------------------------
+        ## We estimate the value of the cumulative distribution function at the threshold (280) by drawing a straight line between the two quantile points
+        with np.errstate(divide="ignore", invalid="ignore"):
+            Fy = p_lo + (y_threshold - Q_lo) / (Q_hi - Q_lo) * (p_hi - p_lo)
+
+        # --- 4. Handle y below min or above max -----------------------------
+        
+        ## If the threshold is below the lowest quantile, then P(Y ≤ threshold) = 0, if above the highest quantile, then P(Y ≤ threshold) = 1
+        ## and if interpolation caused a NaN (e.g., dividing by zero), it fills it with the upper quantile level
+
+        Fy[y_threshold <= Q[:, 0]] = 0.0   # below or equal to lowest quantile
+        Fy[y_threshold >= Q[:, -1]] = 1.0  # above or equal to highest quantile
+        Fy = np.nan_to_num(Fy, nan=p_hi)   # in case Q_hi == Q_lo
+
+        # debug statements
+        if debug:
+            print("Fy sample:", Fy[:5])
+            print("prob_exceed sample:", (1.0 - Fy)[:5])
+
+        # Fy is the CDF at the threshiold, i.e., P(Y ≤ 280)
+        # so 1.0 - Fy gives us P(Y > 280) = exceedance probability
+        return 1.0 - Fy     
         
     def apply_enterococci_constraints(self, preds: pd.DataFrame | pd.Series):
         """ clip at 5 MPN/100 mL and round to int """
         clipped = np.maximum(preds, 5).round()        # ← NumPy outputs ndarray
         return pd.DataFrame(clipped, index=preds.index,
                             columns=getattr(preds, "columns", None))
+    
+    # ─────────────────────────────────────────────────────────────
+    #  NEW helper: row-wise monotone smoothing spline across τ
+    # ─────────────────────────────────────────────────────────────
+    def _apply_monotone_spline(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Two-step post-processing for each row:
+          1) Isotonic regression (PAVA)  → step-wise monotone grid
+          2) PCHIP spline through plateau knots → smooth, still monotone
+        Returns DataFrame with the same columns, now C¹-smooth & ordered.
+        """
+        q_cols = sorted(df.columns, key=lambda c: float(c.split("_")[1]))
+        tau    = np.array([float(c.split("_")[1]) for c in q_cols])
+        out_df = df.copy()
+
+        def smooth_row(v: np.ndarray) -> np.ndarray:
+            # 1️⃣ PAVA
+            iso = isotonic_regression(v, increasing=True)
+            iso = np.asarray(iso, dtype=float)
+
+            # 2️⃣ find first index of each plateau
+            jumps   = np.diff(iso, prepend=iso[0]-1)
+            knot_ix = np.nonzero(jumps)[0]
+            if knot_ix.size < 2:                 # all equal
+                return iso
+
+            spline = PchipInterpolator(tau[knot_ix], iso[knot_ix], extrapolate=True)
+            return spline(tau)
+
+        out_df[q_cols] = np.apply_along_axis(smooth_row, 1, df[q_cols].to_numpy(float))
+        return out_df
+
 
     
     def monotonic_sort_quantiles(self, df, quantile_columns):
