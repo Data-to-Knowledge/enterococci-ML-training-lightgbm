@@ -38,6 +38,7 @@ class Preprocessor:
         data['DateTime'] = pd.to_datetime(data['DateTime'], format='%m/%d/%y %H:%M')
         data['DateTime'] = data['DateTime'].dt.strftime('%d/%m/%Y %H:%M')
         data['DateTime'] = pd.to_datetime(data['DateTime'], format='%d/%m/%Y %H:%M')
+        data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
 
         data.sort_values(by=['SITE_NAME', 'DateTime'], inplace=True)
         data = data.drop_duplicates(subset=['DateTime', 'SITE_NAME'], keep='first')

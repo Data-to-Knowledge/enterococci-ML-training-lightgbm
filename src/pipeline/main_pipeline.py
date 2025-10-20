@@ -57,6 +57,28 @@ def run_pipeline(config_path: str, mode: str):
     data = feature_engineer.engineer_features(data)
     data = preprocessor.transform_catergorical_variable_type(data)
 
+    # === canonical cleaned snapshot (≤ 2024-12-31) ===
+    date_column = config["data"].get("date_column", "DateTime")
+
+    # ensure datetime is parsed consistently (day-first, 4-digit years)
+    data[date_column] = pd.to_datetime(data[date_column], dayfirst=True, errors="coerce")
+
+    cutoff = pd.Timestamp("2024-12-31 23:59:59")
+    clean_snapshot = data.loc[data[date_column] <= cutoff].copy()
+
+    outdir = Path("data/processed")
+    outdir.mkdir(parents=True, exist_ok=True)
+    outpath = outdir / "cleaned_training_data_up_to_2024.csv"
+
+    clean_snapshot.to_csv(outpath, index=False)
+
+    logger.info(
+        "Wrote cleaned snapshot to %s | rows=%d, cols=%d | span: %s → %s",
+        outpath, len(clean_snapshot), clean_snapshot.shape[1],
+        clean_snapshot[date_column].min(), clean_snapshot[date_column].max()
+    )
+
+
     logger.info(f"Processed data: {data.shape} rows, {data.columns.size} columns")
 
     # Get models to process
