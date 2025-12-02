@@ -1,3 +1,6 @@
+# Mark Python as the primary language
+*.py linguist-language=Python
+
 # Vendored everything by default (exclude from language stats)
 * linguist-vendored
 
