@@ -1,0 +1,611 @@
+2025-12-02 16:33:26 - __main__ - INFO - Starting pipeline in all mode with config from C:\atman_python\Dont-Swim-in-Data\src\config\main_config.yaml
+2025-12-02 16:33:26 - src.data.feature_engineering - INFO - Loading configuration from C:\atman_python\Dont-Swim-in-Data\src\config\main_config.yaml
+2025-12-02 16:33:26 - src.data.feature_engineering - INFO - Configuration loaded successfully
+2025-12-02 16:33:26 - src.data.data_loader - INFO - Loading partially processed data from C:\atman_python\Dont-Swim-in-Data\data\interim\training_data.csv
+2025-12-02 16:33:26 - src.data.data_loader - INFO - Loaded 4171 rows and 81 features
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:38: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%m/%d/%y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:39: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = data['DateTime'].dt.strftime('%d/%m/%Y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:40: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%d/%m/%Y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:41: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:43: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data.sort_values(by=['SITE_NAME', 'DateTime'], inplace=True)
+2025-12-02 16:33:26 - src.data.feature_engineering - INFO - Engineering features
+C:\atman_python\Dont-Swim-in-Data\src\data\feature_engineering.py:162: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
+2025-12-02 16:33:27 - src.data.feature_engineering - INFO - Feature engineering complete
+2025-12-02 16:33:27 - __main__ - INFO - Wrote cleaned snapshot to data\processed\cleaned_training_data_up_to_2024.csv | rows=4163, cols=42 | span: 2013-11-12 10:00:00 \u2192 2024-07-31 13:00:00
+2025-12-02 16:33:27 - __main__ - INFO - Processed data: (4163, 42) rows, 42 columns
+2025-12-02 16:33:27 - __main__ - INFO - Training models...
+2025-12-02 16:33:27 - __main__ - INFO - Training probabilistic_framework...
+2025-12-02 16:33:36 - __main__ - INFO - Model probabilistic_framework saved to models\probabilistic_framework.joblib
+2025-12-02 16:33:36 - __main__ - INFO - Training lightgbm...
+2025-12-02 16:33:36 - src.models.benchmarks.lightgbm_models - INFO - Initialized LightGBM model with Poisson loss
+2025-12-02 16:33:36 - src.models.benchmarks.lightgbm_models - INFO - Training LightGBM model with 4163 samples
+2025-12-02 16:33:36 - src.models.benchmarks.lightgbm_models - INFO - Model training completed with 100 trees
+2025-12-02 16:33:36 - src.models.benchmarks.lightgbm_models - INFO - Model saved to models\lightgbm.joblib
+2025-12-02 16:33:36 - __main__ - INFO - Model lightgbm saved to models\lightgbm.joblib
+2025-12-02 16:33:36 - __main__ - INFO - Training matrix_decomposition_framework...
+2025-12-02 16:33:37 - src.models.matrix_decomp.matrix_decomposition_model - INFO - Performing NMF decomposition on input data matrix.
+C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\sklearn\decomposition\_nmf.py:1610: UserWarning: The multiplicative update ('mu') solver cannot update zeros present in the initialization, and so leads to poorer results when used jointly with init='nndsvd'. You may try init='nndsvda' or init='nndsvdar' instead.
+  warnings.warn(
+2025-12-02 16:33:38 - src.models.matrix_decomp.matrix_decomposition_model - INFO - NMF decomposition complete: W shape (1869, 4), H shape (4, 21)
+2025-12-02 16:33:39 - __main__ - INFO - Model matrix_decomposition_framework saved to models\matrix_decomposition_framework.joblib
+2025-12-02 16:33:39 - src.evaluation.cross_validation - INFO - Initialized Time-Series CV with 3 periods
+2025-12-02 16:33:39 - __main__ - INFO - Evaluating models: probabilistic_framework, lightgbm, matrix_decomposition_framework
+2025-12-02 16:33:39 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=256
+2025-12-02 16:33:39 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=333
+2025-12-02 16:33:39 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=458
+2025-12-02 16:33:39 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_1
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for test dataset:
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - TP: 17.0000
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - FP: 23.0000
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - TN: 204.0000
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - FN: 12.0000
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - rmse: 457.7511
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - rmse_safe: 236.0936
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - rmse_exceedance: 1188.8596
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - wmape_safe: 249.8066
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - wmape_exceedance: 65.8504
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - sensitivity: 0.5862
+2025-12-02 16:33:45 - src.evaluation.evaluator - INFO - specificity: 0.8987
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for train dataset:
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - TP: 69.0000
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - FP: 30.0000
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - TN: 2623.0000
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - FN: 21.0000
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - rmse: 159.7915
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - rmse_safe: 82.0745
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - rmse_exceedance: 761.3343
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - wmape_safe: 99.7032
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - wmape_exceedance: 38.3656
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - sensitivity: 0.7667
+2025-12-02 16:33:47 - src.evaluation.evaluator - INFO - specificity: 0.9887
+2025-12-02 16:33:47 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_2
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for test dataset:
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - TP: 24.0000
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - FP: 11.0000
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - TN: 288.0000
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - FN: 10.0000
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - rmse: 671.6603
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - rmse_safe: 154.5013
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - rmse_exceedance: 2051.4568
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - wmape_safe: 201.4961
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - wmape_exceedance: 69.7293
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - sensitivity: 0.7059
+2025-12-02 16:33:53 - src.evaluation.evaluator - INFO - specificity: 0.9632
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for train dataset:
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - TP: 93.0000
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - FP: 35.0000
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - TN: 2975.0000
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - FN: 31.0000
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - rmse: 174.1205
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - rmse_safe: 92.7314
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - rmse_exceedance: 746.6763
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - wmape_safe: 100.8385
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - wmape_exceedance: 37.7747
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - sensitivity: 0.7500
+2025-12-02 16:33:56 - src.evaluation.evaluator - INFO - specificity: 0.9884
+2025-12-02 16:33:56 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_3
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for test dataset:
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - TP: 26.0000
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - FP: 41.0000
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - TN: 380.0000
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - FN: 11.0000
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - rmse: 607.4952
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - rmse_safe: 350.4016
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - rmse_exceedance: 1780.7848
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - wmape_safe: 420.8214
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - wmape_exceedance: 71.1260
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - sensitivity: 0.7027
+2025-12-02 16:34:02 - src.evaluation.evaluator - INFO - specificity: 0.9026
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for train dataset:
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TP: 129.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FP: 36.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TN: 3378.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FN: 29.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse: 204.2404
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_safe: 70.2002
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_exceedance: 914.6436
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_safe: 90.8566
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_exceedance: 36.8722
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - sensitivity: 0.8165
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - specificity: 0.9895
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - Overall evaluation results for probabilistic_framework:
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - TP: 67.0000
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - FP: 75.0000
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - TN: 872.0000
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - FN: 33.0000
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - rmse: 596.7853
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - rmse_safe: 274.7395
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - rmse_exceedance: 1736.1180
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - wmape_safe: 308.6075
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - wmape_exceedance: 69.3256
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - sensitivity: 0.6700
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - specificity: 0.9208
+2025-12-02 16:34:05 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=256
+2025-12-02 16:34:05 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=333
+2025-12-02 16:34:05 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=458
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - Evaluating lightgbm on fold_1
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Initialized LightGBM model with Poisson loss
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Training LightGBM model with 2743 samples
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Model training completed with 100 trees
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 256 samples
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for test dataset:
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TP: 11.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FP: 9.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TN: 218.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FN: 18.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse: 434.3235
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_safe: 85.9513
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_exceedance: 1267.8254
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_safe: 120.2121
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_exceedance: 67.4740
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - sensitivity: 0.3793
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - specificity: 0.9604
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 2743 samples
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for train dataset:
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TP: 53.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FP: 13.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TN: 2640.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FN: 37.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse: 111.5980
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_safe: 37.2004
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_exceedance: 582.0480
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_safe: 125.3439
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_exceedance: 34.3431
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - sensitivity: 0.5889
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - specificity: 0.9951
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - Evaluating lightgbm on fold_2
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Initialized LightGBM model with Poisson loss
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Training LightGBM model with 3134 samples
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Model training completed with 100 trees
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 333 samples
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for test dataset:
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TP: 14.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FP: 5.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TN: 294.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FN: 20.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse: 779.0125
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_safe: 79.1560
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_exceedance: 2426.6360
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_safe: 147.3130
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_exceedance: 79.2064
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - sensitivity: 0.4118
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - specificity: 0.9833
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 3134 samples
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for train dataset:
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TP: 79.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FP: 17.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - TN: 2993.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - FN: 45.0000
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse: 129.4556
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_safe: 44.0673
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - rmse_exceedance: 613.5349
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_safe: 136.0934
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - wmape_exceedance: 35.7264
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - sensitivity: 0.6371
+2025-12-02 16:34:05 - src.evaluation.evaluator - INFO - specificity: 0.9944
+2025-12-02 16:34:05 - src.evaluation.time_series_evaluator - INFO - Evaluating lightgbm on fold_3
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Initialized LightGBM model with Poisson loss
+2025-12-02 16:34:05 - src.models.benchmarks.lightgbm_models - INFO - Training LightGBM model with 3572 samples
+2025-12-02 16:34:06 - src.models.benchmarks.lightgbm_models - INFO - Model training completed with 100 trees
+2025-12-02 16:34:06 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 458 samples
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for test dataset:
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - TP: 23.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - FP: 26.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - TN: 395.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - FN: 14.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse: 585.4458
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse_safe: 169.9933
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse_exceedance: 1978.3427
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - wmape_safe: 253.4784
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - wmape_exceedance: 80.4394
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - sensitivity: 0.6216
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - specificity: 0.9382
+2025-12-02 16:34:06 - src.models.benchmarks.lightgbm_models - INFO - Generating predictions for 3572 samples
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for train dataset:
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - TP: 100.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - FP: 24.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - TN: 3390.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - FN: 58.0000
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse: 161.6257
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse_safe: 51.0931
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - rmse_exceedance: 730.8684
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - wmape_safe: 146.6387
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - wmape_exceedance: 36.0054
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - sensitivity: 0.6329
+2025-12-02 16:34:06 - src.evaluation.evaluator - INFO - specificity: 0.9930
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - Overall evaluation results for lightgbm:
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - TP: 48.0000
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - FP: 40.0000
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - TN: 907.0000
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - FN: 52.0000
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - rmse: 623.7527
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - rmse_safe: 128.8253
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - rmse_exceedance: 1978.9827
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - wmape_safe: 184.9851
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - wmape_exceedance: 76.9177
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - sensitivity: 0.4800
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - specificity: 0.9578
+2025-12-02 16:34:06 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=256
+2025-12-02 16:34:06 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=333
+2025-12-02 16:34:06 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=458
+2025-12-02 16:34:06 - src.evaluation.time_series_evaluator - INFO - Evaluating matrix_decomposition_framework on fold_1
+2025-12-02 16:34:07 - src.models.matrix_decomp.matrix_decomposition_model - INFO - Performing NMF decomposition on input data matrix.
+C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\sklearn\decomposition\_nmf.py:1610: UserWarning: The multiplicative update ('mu') solver cannot update zeros present in the initialization, and so leads to poorer results when used jointly with init='nndsvd'. You may try init='nndsvda' or init='nndsvdar' instead.
+  warnings.warn(
+2025-12-02 16:34:07 - src.models.matrix_decomp.matrix_decomposition_model - INFO - NMF decomposition complete: W shape (1215, 4), H shape (4, 21)
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for test dataset:
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - TP: 16.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - FP: 12.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - TN: 215.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - FN: 13.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse: 438.6948
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse_safe: 224.1968
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse_exceedance: 1142.5626
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - wmape_safe: 209.7519
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - wmape_exceedance: 63.1329
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - sensitivity: 0.5517
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - specificity: 0.9471
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for train dataset:
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - TP: 47.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - FP: 22.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - TN: 2631.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - FN: 43.0000
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse: 204.8934
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse_safe: 97.9370
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - rmse_exceedance: 998.3770
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - wmape_safe: 166.1053
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - wmape_exceedance: 51.8469
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - sensitivity: 0.5222
+2025-12-02 16:34:08 - src.evaluation.evaluator - INFO - specificity: 0.9917
+2025-12-02 16:34:08 - src.evaluation.time_series_evaluator - INFO - Evaluating matrix_decomposition_framework on fold_2
+2025-12-02 16:34:09 - src.models.matrix_decomp.matrix_decomposition_model - INFO - Performing NMF decomposition on input data matrix.
+C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\sklearn\decomposition\_nmf.py:1610: UserWarning: The multiplicative update ('mu') solver cannot update zeros present in the initialization, and so leads to poorer results when used jointly with init='nndsvd'. You may try init='nndsvda' or init='nndsvdar' instead.
+  warnings.warn(
+2025-12-02 16:34:09 - src.models.matrix_decomp.matrix_decomposition_model - INFO - NMF decomposition complete: W shape (1393, 4), H shape (4, 21)
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for test dataset:
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - TP: 20.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - FP: 8.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - TN: 291.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - FN: 14.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse: 594.2798
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse_safe: 148.5973
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse_exceedance: 1806.8729
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - wmape_safe: 209.8160
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - wmape_exceedance: 66.0916
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - sensitivity: 0.5882
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - specificity: 0.9732
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for train dataset:
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - TP: 66.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - FP: 43.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - TN: 2967.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - FN: 58.0000
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse: 198.2650
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse_safe: 83.5660
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - rmse_exceedance: 907.7389
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - wmape_safe: 166.9604
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - wmape_exceedance: 49.5053
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - sensitivity: 0.5323
+2025-12-02 16:34:10 - src.evaluation.evaluator - INFO - specificity: 0.9857
+2025-12-02 16:34:10 - src.evaluation.time_series_evaluator - INFO - Evaluating matrix_decomposition_framework on fold_3
+2025-12-02 16:34:11 - src.models.matrix_decomp.matrix_decomposition_model - INFO - Performing NMF decomposition on input data matrix.
+C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\sklearn\decomposition\_nmf.py:1610: UserWarning: The multiplicative update ('mu') solver cannot update zeros present in the initialization, and so leads to poorer results when used jointly with init='nndsvd'. You may try init='nndsvda' or init='nndsvdar' instead.
+  warnings.warn(
+2025-12-02 16:34:12 - src.models.matrix_decomp.matrix_decomposition_model - INFO - NMF decomposition complete: W shape (1598, 4), H shape (4, 21)
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for test dataset:
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - TP: 20.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - FP: 44.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - TN: 377.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - FN: 17.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse: 611.0379
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse_safe: 232.4844
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse_exceedance: 2001.6724
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - wmape_safe: 336.2250
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - wmape_exceedance: 78.6057
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - sensitivity: 0.5405
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - specificity: 0.8955
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for train dataset:
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - TP: 91.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - FP: 65.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - TN: 3349.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - FN: 67.0000
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse: 248.4139
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse_safe: 104.6288
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - rmse_exceedance: 1076.3642
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - wmape_safe: 185.3707
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - wmape_exceedance: 52.8950
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - sensitivity: 0.5759
+2025-12-02 16:34:13 - src.evaluation.evaluator - INFO - specificity: 0.9810
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - Overall evaluation results for matrix_decomposition_framework:
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - TP: 56.0000
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - FP: 64.0000
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - TN: 883.0000
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - FN: 44.0000
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - rmse: 568.0740
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - rmse_safe: 207.4812
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - rmse_exceedance: 1723.6835
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - wmape_safe: 263.7139
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - wmape_exceedance: 69.8691
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - sensitivity: 0.5600
+2025-12-02 16:34:13 - src.evaluation.time_series_evaluator - INFO - specificity: 0.9324
+
+
+---------------------------------
+FORECAST PERFORMANCE (MODEL: <src.models.probabilistic.main_probabilistic.ProbabilisticForecastingModel object at 0x0000027BA81EFF50>)
+---------------------------------
+-----
+TRAINING PERFORMANCE (2013-10-01 00:00:00 - 2023-10)
+
+
+Accuracy: 0.9807
+Sensitivity/Recall (EXCEEDANCE): 0.7823
+Specificity/Recall (SAFE): 0.9889
+Precision (SAFE): 0.9911
+Precision (EXCEEDANCE): 0.7423
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 291
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 81
+True Negatives (TRUE: SAFE, MODEL: SAFE): 8976
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 101
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 355
+
+
+Weighted MAPE: 0.5276
+Log-Weighted MAPE: 0.232
+MAE: 36.938
+Weighted MAPE (EXCEEDANCE): 0.375
+Log-Weighted MAPE (EXCEEDANCE): 0.0851
+MAE (EXCEEDANCE): 494.7823
+Weighted MAPE (SAFE): 0.966
+Log-Weighted MAPE (SAFE): 0.2494
+MAE (SAFE): 18.1743
+-----
+
+
+-----
+TEST PERFORMANCE (2021-10 - 2024-10))
+
+
+Accuracy: 0.8968
+Sensitivity/Recall (EXCEEDANCE): 0.67
+Specificity/Recall (SAFE): 0.9208
+Specificity/Recall (PRECAUTIONARY): 0.76
+Precision (SAFE): 0.9635
+Precision (EXCEEDANCE): 0.4718
+F-2 Score: 0.6181
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 67
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 33
+True Negatives (TRUE: SAFE, MODEL: SAFE): 872
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 75
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 76
+
+
+RMSE: 1.6233
+NRMSE: 21.8819
+Weighted MAPE: 1.0556
+Log-Weighted MAPE: 0.4205
+MAE: 190.0487
+log-R2: 0.041
+Weighted MAPE (EXCEEDANCE): 0.6933
+Log-Weighted MAPE (EXCEEDANCE): 0.1849
+MAE (EXCEEDANCE): 1108.89
+Weighted MAPE (SAFE): 3.0861
+Log-Weighted MAPE (SAFE): 0.4848
+MAE (SAFE): 93.0222
+NRMSE (EXCEEDANCE): 17.8705
+NRMSE (SAFE): 100.6372
+R2 (EXCEEDANCE): -2.3749
+R2 (SAFE): -1.1168
+log-R2: 0.041
+-----
+------------------------------------------------------------------
+
+
+
+
+---------------------------------
+FORECAST PERFORMANCE (MODEL: LightGBMModel(config={'data': {'date_column': 'DateTime',
+                               'prediction_data_path': 'data/processed/test_data.csv',
+                               'site_column': 'SITE_NAME',
+                               'target_column': 'Enterococci',
+                               'test_data_path': 'data/processed/test_data.csv',
+                               'training_data_path': 'data/processed/training_data.csv',
+                               'validation_data_path': 'data/processed/validation_data.csv'},
+                      'evaluation': {'cross...
+                                   'models_to_train': ['probabilistic_framework',
+                                                       'lightgbm',
+                                                       'matrix_decomposition_framework'],
+                                   'random_seed': 'None'},
+                      'prediction': {'generate_visualizations': True,
+                                     'model_name': ['probabilistic', 'lightgbm',
+                                                    'matrix_decomposition_framework'],
+                                     'output_path': 'results/predictions.csv',
+                                     'training_prediction_data_path': 'results/training_predictions.csv',
+                                     'visualization_path': 'results/visualizations'}}))
+---------------------------------
+-----
+TRAINING PERFORMANCE (2013-10-01 00:00:00 - 2023-10)
+
+
+Accuracy: 0.9795
+Sensitivity/Recall (EXCEEDANCE): 0.6237
+Specificity/Recall (SAFE): 0.9941
+Precision (SAFE): 0.9847
+Precision (EXCEEDANCE): 0.8112
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 232
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 140
+True Negatives (TRUE: SAFE, MODEL: SAFE): 9023
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 54
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 315
+
+
+Weighted MAPE: 0.6181
+Log-Weighted MAPE: 0.4548
+MAE: 43.2789
+Weighted MAPE (EXCEEDANCE): 0.3553
+Log-Weighted MAPE (EXCEEDANCE): 0.1059
+MAE (EXCEEDANCE): 468.8199
+Weighted MAPE (SAFE): 1.3734
+Log-Weighted MAPE (SAFE): 0.4962
+MAE (SAFE): 25.839
+-----
+
+
+-----
+TEST PERFORMANCE (2021-10 - 2024-10))
+
+
+Accuracy: 0.9121
+Sensitivity/Recall (EXCEEDANCE): 0.48
+Specificity/Recall (SAFE): 0.9578
+Specificity/Recall (PRECAUTIONARY): 0.67
+Precision (SAFE): 0.9458
+Precision (EXCEEDANCE): 0.5455
+F-2 Score: 0.4918
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 48
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 52
+True Negatives (TRUE: SAFE, MODEL: SAFE): 907
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 40
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 67
+
+
+RMSE: 1.5305
+NRMSE: 20.6299
+Weighted MAPE: 0.9328
+Log-Weighted MAPE: 0.4228
+MAE: 167.9436
+log-R2: 0.1476
+Weighted MAPE (EXCEEDANCE): 0.7692
+Log-Weighted MAPE (EXCEEDANCE): 0.2186
+MAE (EXCEEDANCE): 1230.33
+Weighted MAPE (SAFE): 1.8499
+Log-Weighted MAPE (SAFE): 0.4785
+MAE (SAFE): 55.7592
+NRMSE (EXCEEDANCE): 20.3704
+NRMSE (SAFE): 47.1887
+R2 (EXCEEDANCE): -3.0585
+R2 (SAFE): -0.8029
+log-R2: 0.1476
+-----
+------------------------------------------------------------------
+
+
+
+
+---------------------------------
+FORECAST PERFORMANCE (MODEL: <src.models.matrix_decomp.main_matrix.MatrixDecompositionFramework object at 0x0000027BA4DC4BF0>)
+---------------------------------
+-----
+TRAINING PERFORMANCE (2013-10-01 00:00:00 - 2023-10)
+
+
+Accuracy: 0.9685
+Sensitivity/Recall (EXCEEDANCE): 0.5484
+Specificity/Recall (SAFE): 0.9857
+Precision (SAFE): 0.9816
+Precision (EXCEEDANCE): 0.6108
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 204
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 168
+True Negatives (TRUE: SAFE, MODEL: SAFE): 8947
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 130
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 265
+
+
+Weighted MAPE: 0.8317
+Log-Weighted MAPE: 0.4164
+MAE: 58.2324
+Weighted MAPE (EXCEEDANCE): 0.5158
+Log-Weighted MAPE (EXCEEDANCE): 0.1625
+MAE (EXCEEDANCE): 680.4521
+Weighted MAPE (SAFE): 1.7398
+Log-Weighted MAPE (SAFE): 0.4466
+MAE (SAFE): 32.7321
+-----
+
+
+-----
+TEST PERFORMANCE (2021-10 - 2024-10))
+
+
+Accuracy: 0.8968
+Sensitivity/Recall (EXCEEDANCE): 0.56
+Specificity/Recall (SAFE): 0.9324
+Specificity/Recall (PRECAUTIONARY): 0.71
+Precision (SAFE): 0.9525
+Precision (EXCEEDANCE): 0.4667
+F-2 Score: 0.5385
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 56
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 44
+True Negatives (TRUE: SAFE, MODEL: SAFE): 883
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 64
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 71
+
+
+RMSE: 1.6487
+NRMSE: 22.2231
+Weighted MAPE: 0.9922
+Log-Weighted MAPE: 0.4451
+MAE: 178.6395
+log-R2: 0.0109
+Weighted MAPE (EXCEEDANCE): 0.6987
+Log-Weighted MAPE (EXCEEDANCE): 0.2107
+MAE (EXCEEDANCE): 1117.5845
+Weighted MAPE (SAFE): 2.6371
+Log-Weighted MAPE (SAFE): 0.509
+MAE (SAFE): 79.4901
+NRMSE (EXCEEDANCE): 17.7425
+NRMSE (SAFE): 76.0004
+R2 (EXCEEDANCE): -3.0778
+R2 (SAFE): -1.139
+log-R2: 0.0109
+-----
+------------------------------------------------------------------
+
+
+Traceback (most recent call last):
+  File "C:\atman_python\Dont-Swim-in-Data\src\pipeline\main_pipeline.py", line 478, in <module>
+    app = run_pipeline(MAIN_CONFIG_PATH, "all")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\atman_python\Dont-Swim-in-Data\src\pipeline\main_pipeline.py", line 111, in run_pipeline
+    ts_evaluator.generate_report(report_path)
+  File "C:\atman_python\Dont-Swim-in-Data\src\evaluation\evaluator.py", line 293, in generate_report
+    value.to_csv(csv_path, index=False)
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: 'reports'

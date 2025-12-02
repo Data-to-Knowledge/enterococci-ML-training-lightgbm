@@ -31,30 +31,51 @@ MEDIUM_THRESHOLD = 280  # For exceedance classification
 def generate_dashboard(forecast):
     """
     Generate a Dash dashboard for visualizing and comparing model forecasts.
-    
+
     Args:
         forecast (dict): Dictionary of DataFrames with model predictions
-        
+
     Returns:
         dash.Dash: Dashboard application
     """
     logger.info("Generating dashboard...")
-    
+
     # Define common columns from the first model's DataFrame:
+    # Exclude predictions, quantile columns, and probabilistic-specific columns
     first_df = next(iter(forecast.values()))
-    common_cols = [col for col in first_df.columns if col != "predictions" and not col.startswith("q_")]
+
+    # DEBUG: Log what columns we received
+    logger.info(f"Dashboard received DataFrame with columns: {first_df.columns.tolist()}")
+    logger.info(f"DataFrame shape: {first_df.shape}")
+    if 'predictions' in first_df.columns:
+        logger.info(f"'predictions' column exists with {len(first_df['predictions'])} values")
+        logger.info(f"Sample predictions: {first_df['predictions'].head()}")
+
+    exclude_cols = ["predictions", "prob_exceed_280", "risk_label", "Enterococci Alert Level", "time_UTC", "date"]
+    common_cols = [col for col in first_df.columns
+                   if col not in exclude_cols
+                   and not col.startswith("q_")
+                   and not col.endswith("_raw")]
 
     dfs = []
     for model, df in forecast.items():
         df_copy = df.copy()
+
+        # DEBUG: Check before rename
+        logger.info(f"Model '{model}': Before rename, columns = {df_copy.columns.tolist()}")
+
         df_copy = df_copy.rename(columns={"predictions": model})
-        
+
+        # DEBUG: Check after rename
+        logger.info(f"Model '{model}': After rename, columns = {df_copy.columns.tolist()}")
+        logger.info(f"Model column '{model}' exists: {model in df_copy.columns}")
+
         if model == "probabilistic_framework":
             quantile_cols = [col for col in df_copy.columns if col.startswith("q_")]
             selected_cols = common_cols + quantile_cols + [model]
         else:
             selected_cols = common_cols + [model]
-        
+
         dfs.append(df_copy[selected_cols])
 
     # Merge on the common columns
@@ -441,8 +462,14 @@ def create_performance_table(data):
     
     # Calculate overall performance
     test_metrics = {key: [] for key in metrics_keys}
-    
+
     if 'Enterococci' in data.columns and 'PREDICTION' in data.columns:
+        # DEBUG: Log prediction values
+        logger.info(f"Performance calculation - Total samples: {len(data)}")
+        logger.info(f"PREDICTION column sample values: {data['PREDICTION'].head(10)}")
+        logger.info(f"PREDICTION >= 280 count: {(data['PREDICTION'] >= 280).sum()}")
+        logger.info(f"Enterococci >= 280 count: {(data['Enterococci'] >= 280).sum()}")
+
         y_true = convert_target_to_flag(data['Enterococci'], 280)
         y_pred = convert_target_to_flag(data['PREDICTION'], 280)
         

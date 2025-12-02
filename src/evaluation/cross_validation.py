@@ -60,13 +60,16 @@ class TimeSeriesCV:
         splits = []
         
         # List of sites to remove from the test set
+        # (excluded because they're not in production API to LAWA)
         sites_to_remove = [
-            'Scarborough Beach by clock tower', 
-            'Sumner Beach Surf club', 
-            'Caroline Bay - mid beach', 
+            'Scarborough Beach by clock tower',
+            'Sumner Beach Surf club',
+            'Caroline Bay - mid beach',
             'Timaru Coast Caroline Bay at Virtue Avenue',
-            'Timaru Coast at yacht club jetty', 
-            'Taylors Mistake Beach Surf club'
+            'Timaru Coast at yacht club jetty',
+            'Taylors Mistake Beach Surf club',
+            'Governors Bay Sandy Beach',
+            'Cass Bay at boat ramp'
         ]
         
         for i, (start_date, end_date) in enumerate(self.parsed_periods):

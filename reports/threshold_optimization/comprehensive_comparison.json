@@ -1,0 +1,69 @@
+{
+    "baseline": {
+        "method": "Median of RAW quantiles > 280",
+        "metrics": {
+            "TP": 59,
+            "FP": 51,
+            "TN": 776,
+            "FN": 26,
+            "sensitivity": 0.6941176470588235,
+            "specificity": 0.9383313180169287,
+            "accuracy": 0.9155701754385965,
+            "precision": 0.5363636363636364,
+            "threshold_type": "point_forecast_raw"
+        }
+    },
+    "probability_methods": {
+        "Youden's J Index": {
+            "description": "Maximizes (Sensitivity + Specificity - 1)",
+            "metrics": {
+                "TP": 65,
+                "FP": 73,
+                "TN": 754,
+                "FN": 20,
+                "sensitivity": 0.7647058823529411,
+                "specificity": 0.9117291414752116,
+                "accuracy": 0.8980263157894737,
+                "precision": 0.47101449275362317,
+                "threshold_type": "youden_j",
+                "probability_threshold": 0.17000000000000004
+            }
+        },
+        "Cost-Weighted (CR=10)": {
+            "description": "False negative costs 10x more than false positive",
+            "metrics": {
+                "TP": 69,
+                "FP": 119,
+                "TN": 708,
+                "FN": 16,
+                "sensitivity": 0.8117647058823529,
+                "specificity": 0.8561064087061668,
+                "accuracy": 0.8519736842105263,
+                "precision": 0.3670212765957447,
+                "threshold_type": "cost_weighted",
+                "probability_threshold": 0.060000000000000005
+            }
+        },
+        "Max Specificity (MinSens=0.65)": {
+            "description": "Maximize specificity while maintaining 65% sensitivity",
+            "metrics": {
+                "TP": 56,
+                "FP": 48,
+                "TN": 779,
+                "FN": 29,
+                "sensitivity": 0.6588235294117647,
+                "specificity": 0.9419588875453446,
+                "accuracy": 0.9155701754385965,
+                "precision": 0.5384615384615384,
+                "threshold_type": "max_specificity",
+                "probability_threshold": 0.31000000000000005
+            }
+        }
+    },
+    "dataset_info": {
+        "total_samples": 912,
+        "sites": 13,
+        "exceedances": 85,
+        "safe_days": 827
+    }
+}

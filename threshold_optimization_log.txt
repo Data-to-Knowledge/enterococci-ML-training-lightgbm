@@ -1,0 +1,184 @@
+2025-12-02 15:47:23 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - PROBABILITY THRESHOLD OPTIMIZATION - CROSS-VALIDATION TEST
+2025-12-02 15:47:23 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - LOADING AND PREPARING DATA
+2025-12-02 15:47:23 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - Raw data shape: (4171, 81)
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:38: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%m/%d/%y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:39: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = data['DateTime'].dt.strftime('%d/%m/%Y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:40: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%d/%m/%Y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:41: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:43: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data.sort_values(by=['SITE_NAME', 'DateTime'], inplace=True)
+2025-12-02 15:47:23 - src.data.feature_engineering - INFO - Engineering features
+c:\atman_python\Dont-Swim-in-Data\src\data\feature_engineering.py:162: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
+2025-12-02 15:47:23 - src.data.feature_engineering - INFO - Feature engineering complete
+2025-12-02 15:47:23 - __main__ - INFO - Processed data shape: (4163, 42)
+2025-12-02 15:47:23 - src.evaluation.cross_validation - INFO - Initialized Time-Series CV with 3 periods
+2025-12-02 15:47:23 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=391
+2025-12-02 15:47:23 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=438
+2025-12-02 15:47:23 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=591
+2025-12-02 15:47:23 - __main__ - INFO - Generated 3 CV folds
+2025-12-02 15:47:23 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - FOLD 1/3
+2025-12-02 15:47:23 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:23 - __main__ - INFO - Train: 2743 samples, Test: 391 samples
+2025-12-02 15:47:23 - __main__ - INFO - Test exceedances: 34 / 391 (8.7%)
+2025-12-02 15:47:23 - __main__ - INFO - 
+Training probabilistic model...
+2025-12-02 15:47:30 - __main__ - INFO - Generating predictions...
+2025-12-02 15:47:31 - __main__ - INFO - 
+--------------------------------------------------------------------------------
+2025-12-02 15:47:31 - __main__ - INFO - OPTIMIZING THRESHOLDS FOR FOLD 1
+2025-12-02 15:47:31 - __main__ - INFO - --------------------------------------------------------------------------------
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=7.0, step=0.01
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 391 samples...
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO -   Exceedances: 34 (8.70%)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO -   Safe: 357 (91.30%)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.030  (Sens=0.676, Spec=0.868, Youden=0.545)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.010  (Sens=0.824, Spec=0.476, Youden=0.300)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.290  (Sens=0.500, Spec=0.927, Youden=0.427)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.030  (Sens=0.676, Spec=0.868, Youden=0.545)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.030  (Sens=0.676, Spec=0.868, Youden=0.545)
+2025-12-02 15:47:31 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 15:47:31 - __main__ - INFO - youden_j            : threshold=0.030  Sens=0.676  Spec=0.868  Youden=0.545
+2025-12-02 15:47:31 - __main__ - INFO - cost_weighted       : threshold=0.010  Sens=0.824  Spec=0.476  Youden=0.300
+2025-12-02 15:47:31 - __main__ - INFO - max_specificity     : threshold=0.290  Sens=0.500  Spec=0.927  Youden=0.427
+2025-12-02 15:47:31 - __main__ - INFO - point_forecast_baseline: threshold=280 (direct)  Sens=0.500  Spec=0.916
+2025-12-02 15:47:32 - src.evaluation.threshold_optimization - INFO - Threshold optimization plot saved to C:\atman_python\Dont-Swim-in-Data\reports\threshold_optimization\fold_1_threshold_curves.png
+2025-12-02 15:47:32 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:32 - __main__ - INFO - FOLD 2/3
+2025-12-02 15:47:32 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:32 - __main__ - INFO - Train: 3134 samples, Test: 438 samples
+2025-12-02 15:47:32 - __main__ - INFO - Test exceedances: 34 / 438 (7.8%)
+2025-12-02 15:47:32 - __main__ - INFO - 
+Training probabilistic model...
+2025-12-02 15:47:37 - __main__ - INFO - Generating predictions...
+2025-12-02 15:47:37 - __main__ - INFO - 
+--------------------------------------------------------------------------------
+2025-12-02 15:47:37 - __main__ - INFO - OPTIMIZING THRESHOLDS FOR FOLD 2
+2025-12-02 15:47:37 - __main__ - INFO - --------------------------------------------------------------------------------
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=7.0, step=0.01
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 438 samples...
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO -   Exceedances: 34 (7.76%)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO -   Safe: 404 (92.24%)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.150  (Sens=0.765, Spec=0.960, Youden=0.725)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.010  (Sens=0.853, Spec=0.547, Youden=0.400)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.480  (Sens=0.588, Spec=0.990, Youden=0.578)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.460  (Sens=0.647, Spec=0.985, Youden=0.632)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.150  (Sens=0.765, Spec=0.960, Youden=0.725)
+2025-12-02 15:47:37 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 15:47:37 - __main__ - INFO - youden_j            : threshold=0.150  Sens=0.765  Spec=0.960  Youden=0.725
+2025-12-02 15:47:37 - __main__ - INFO - cost_weighted       : threshold=0.010  Sens=0.853  Spec=0.547  Youden=0.400
+2025-12-02 15:47:37 - __main__ - INFO - max_specificity     : threshold=0.480  Sens=0.588  Spec=0.990  Youden=0.578
+2025-12-02 15:47:37 - __main__ - INFO - point_forecast_baseline: threshold=280 (direct)  Sens=0.676  Spec=0.968
+2025-12-02 15:47:38 - src.evaluation.threshold_optimization - INFO - Threshold optimization plot saved to C:\atman_python\Dont-Swim-in-Data\reports\threshold_optimization\fold_2_threshold_curves.png
+2025-12-02 15:47:38 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:38 - __main__ - INFO - FOLD 3/3
+2025-12-02 15:47:38 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:38 - __main__ - INFO - Train: 3572 samples, Test: 591 samples
+2025-12-02 15:47:38 - __main__ - INFO - Test exceedances: 44 / 591 (7.4%)
+2025-12-02 15:47:38 - __main__ - INFO - 
+Training probabilistic model...
+2025-12-02 15:47:43 - __main__ - INFO - Generating predictions...
+2025-12-02 15:47:43 - __main__ - INFO - 
+--------------------------------------------------------------------------------
+2025-12-02 15:47:43 - __main__ - INFO - OPTIMIZING THRESHOLDS FOR FOLD 3
+2025-12-02 15:47:43 - __main__ - INFO - --------------------------------------------------------------------------------
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=7.0, step=0.01
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 591 samples...
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO -   Exceedances: 44 (7.45%)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO -   Safe: 547 (92.55%)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.190  (Sens=0.727, Spec=0.903, Youden=0.630)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.010  (Sens=0.955, Spec=0.497, Youden=0.452)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.460  (Sens=0.500, Spec=0.954, Youden=0.454)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.390  (Sens=0.568, Spec=0.951, Youden=0.519)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.190  (Sens=0.727, Spec=0.903, Youden=0.630)
+2025-12-02 15:47:43 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 15:47:43 - __main__ - INFO - youden_j            : threshold=0.190  Sens=0.727  Spec=0.903  Youden=0.630
+2025-12-02 15:47:43 - __main__ - INFO - cost_weighted       : threshold=0.010  Sens=0.955  Spec=0.497  Youden=0.452
+2025-12-02 15:47:43 - __main__ - INFO - max_specificity     : threshold=0.460  Sens=0.500  Spec=0.954  Youden=0.454
+2025-12-02 15:47:43 - __main__ - INFO - point_forecast_baseline: threshold=280 (direct)  Sens=0.705  Spec=0.907
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - Threshold optimization plot saved to C:\atman_python\Dont-Swim-in-Data\reports\threshold_optimization\fold_3_threshold_curves.png
+2025-12-02 15:47:44 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:44 - __main__ - INFO - OVERALL THRESHOLD OPTIMIZATION (ALL FOLDS COMBINED)
+2025-12-02 15:47:44 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:44 - __main__ - INFO - Total samples: 1420
+2025-12-02 15:47:44 - __main__ - INFO - Total exceedances: 112 (7.89%)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=7.0, step=0.01
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 1420 samples...
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO -   Exceedances: 112 (7.89%)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO -   Safe: 1308 (92.11%)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.030  (Sens=0.777, Spec=0.826, Youden=0.603)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.010  (Sens=0.884, Spec=0.507, Youden=0.391)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.480  (Sens=0.509, Spec=0.969, Youden=0.478)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.390  (Sens=0.571, Spec=0.958, Youden=0.529)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.160  (Sens=0.679, Spec=0.917, Youden=0.595)
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 15:47:44 - src.evaluation.threshold_optimization - INFO - Threshold optimization plot saved to C:\atman_python\Dont-Swim-in-Data\reports\threshold_optimization\overall_threshold_curves.png
+2025-12-02 15:47:45 - __main__ - INFO - 
+Results saved to: C:\atman_python\Dont-Swim-in-Data\reports\threshold_optimization\probability_threshold_results.json
+2025-12-02 15:47:45 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:45 - __main__ - INFO - FINAL COMPARISON: POINT FORECAST vs PROBABILITY THRESHOLD METHODS
+2025-12-02 15:47:45 - __main__ - INFO - ================================================================================
+2025-12-02 15:47:45 - __main__ - INFO - 
+================================================================================
+2025-12-02 15:47:45 - __main__ - INFO - THRESHOLD OPTIMIZATION COMPLETE
+2025-12-02 15:47:45 - __main__ - INFO - ================================================================================
+
+                 Method Threshold Sensitivity Specificity  TP  FP   TN  FN
+point_forecast_baseline   280.000       0.634       0.928  71  94 1214  41
+               youden_j     0.030       0.777       0.826  87 227 1081  25
+          cost_weighted     0.010       0.884       0.507  99 645  663  13
+        max_specificity     0.480       0.509       0.969  57  41 1267  55

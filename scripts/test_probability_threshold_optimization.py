@@ -121,7 +121,7 @@ def main():
     data = preprocessor.clean_data(data)
     data = feature_engineer.engineer_features(data)
     data = preprocessor.transform_catergorical_variable_type(data)
-    data = preprocessor.label_encode(data)
+    # NOTE: Do NOT label_encode() before cv.split() - it needs text site names for filtering
     data = preprocessor.fill_missing_values(data)
     data['Enterococci'] = preprocessor.set_max_target_value(data['Enterococci'])
 
@@ -131,9 +131,20 @@ def main():
     cv_config = config['evaluation']['cross_validation']
     cv = TimeSeriesCV(cv_config)
 
-    # Get CV splits
-    splits = cv.split(data, date_column='DateTime')
-    logger.info(f"Generated {len(splits)} CV folds")
+    # Get CV splits BEFORE encoding (this applies site filtering using text site names)
+    splits_text = cv.split(data, date_column='DateTime')
+    logger.info(f"Generated {len(splits_text)} CV folds")
+    logger.info("NOTE: Test sets exclude these sites: Scarborough Beach, Sumner Beach, Caroline Bay sites, Taylors Mistake")
+
+    # NOW label encode the full dataset
+    data = preprocessor.label_encode(data)
+
+    # Re-create splits by matching indices from text splits
+    splits = []
+    for train_text, test_text in splits_text:
+        train_encoded = data.loc[train_text.index]
+        test_encoded = data.loc[test_text.index]
+        splits.append((train_encoded, test_encoded))
 
     # Results storage
     fold_results = {}

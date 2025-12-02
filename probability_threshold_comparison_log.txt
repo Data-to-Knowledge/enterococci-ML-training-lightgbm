@@ -1,0 +1,210 @@
+2025-12-02 17:19:44 - __main__ - INFO - ================================================================================
+2025-12-02 17:19:44 - __main__ - INFO - REFINED PROBABILITY THRESHOLD VS BASELINE COMPARISON
+2025-12-02 17:19:44 - __main__ - INFO - ================================================================================
+2025-12-02 17:19:44 - __main__ - INFO - 
+Loading and preparing data...
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:38: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%m/%d/%y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:39: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = data['DateTime'].dt.strftime('%d/%m/%Y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:40: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%d/%m/%Y %H:%M')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:41: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
+c:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:43: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data.sort_values(by=['SITE_NAME', 'DateTime'], inplace=True)
+2025-12-02 17:19:44 - src.data.feature_engineering - INFO - Engineering features
+c:\atman_python\Dont-Swim-in-Data\src\data\feature_engineering.py:162: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
+2025-12-02 17:19:45 - src.data.feature_engineering - INFO - Feature engineering complete
+2025-12-02 17:19:45 - src.evaluation.cross_validation - INFO - Initialized Time-Series CV with 3 periods
+2025-12-02 17:19:45 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=221
+2025-12-02 17:19:45 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=285
+2025-12-02 17:19:45 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=406
+2025-12-02 17:19:45 - __main__ - INFO - 
+Running 3-fold cross-validation...
+2025-12-02 17:19:45 - __main__ - INFO - 
+  Fold 1/3: Training model...
+2025-12-02 17:19:59 - __main__ - INFO - 
+  Fold 2/3: Training model...
+2025-12-02 17:20:09 - __main__ - INFO - 
+  Fold 3/3: Training model...
+2025-12-02 17:20:20 - __main__ - INFO - 
+Total test samples: 912
+2025-12-02 17:20:20 - __main__ - INFO - Total exceedances: 85 (9.32%)
+2025-12-02 17:20:20 - __main__ - INFO - 
+================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - MODEL CALIBRATION ANALYSIS
+2025-12-02 17:20:20 - __main__ - INFO - ================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - 
+Calibration table:
+2025-12-02 17:20:20 - __main__ - INFO -  bin  bin_center  predicted_prob  observed_freq  count
+   0        0.05        0.014053       0.026247    762
+   1        0.15        0.146716       0.133333     30
+   2        0.25        0.265331       0.235294     17
+   3        0.35        0.355952       0.250000     16
+   4        0.45        0.460670       0.583333     12
+   5        0.55        0.550870       0.571429     21
+   6        0.65        0.639591       0.675000     40
+   7        0.75        0.746768       0.500000     12
+2025-12-02 17:20:20 - __main__ - INFO - 
+================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - BASELINE: POINT FORECAST (predictions > 280)
+2025-12-02 17:20:20 - __main__ - INFO - ================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - 
+OVERALL:
+2025-12-02 17:20:20 - __main__ - INFO -   TP=61, FP=57, TN=770, FN=24
+2025-12-02 17:20:20 - __main__ - INFO -   Sensitivity: 0.718
+2025-12-02 17:20:20 - __main__ - INFO -   Specificity: 0.931
+2025-12-02 17:20:20 - __main__ - INFO - 
+================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - PROBABILITY THRESHOLD OPTIMIZATION
+2025-12-02 17:20:20 - __main__ - INFO - ================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - 
+\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - __main__ - INFO - Cost Ratio = 5 (FN is 5x more costly than FP)
+2025-12-02 17:20:20 - __main__ - INFO - Minimum threshold = 0.05 (5%)
+2025-12-02 17:20:20 - __main__ - INFO - \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=5, step=0.01, min_threshold=0.05
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 912 samples...
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Exceedances: 85 (9.32%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Safe: 827 (90.68%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.050  (Sens=0.812, Spec=0.857, Youden=0.669)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.530  (Sens=0.506, Spec=0.967, Youden=0.473)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.390  (Sens=0.647, Spec=0.959, Youden=0.606)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 17:20:20 - __main__ - INFO - 
+  YOUDEN_J (threshold=0.160):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.765, Spec=0.919
+2025-12-02 17:20:20 - __main__ - INFO -     TP=65, FP=67, TN=760, FN=20
+2025-12-02 17:20:20 - __main__ - INFO - 
+  COST_WEIGHTED (threshold=0.050):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.812, Spec=0.857
+2025-12-02 17:20:20 - __main__ - INFO -     TP=69, FP=118, TN=709, FN=16
+2025-12-02 17:20:20 - __main__ - INFO - 
+  MAX_SPECIFICITY (threshold=0.530):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.506, Spec=0.967
+2025-12-02 17:20:20 - __main__ - INFO -     TP=43, FP=27, TN=800, FN=42
+2025-12-02 17:20:20 - __main__ - INFO - 
+\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - __main__ - INFO - Cost Ratio = 10 (FN is 10x more costly than FP)
+2025-12-02 17:20:20 - __main__ - INFO - Minimum threshold = 0.05 (5%)
+2025-12-02 17:20:20 - __main__ - INFO - \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=10, step=0.01, min_threshold=0.05
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 912 samples...
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Exceedances: 85 (9.32%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Safe: 827 (90.68%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.050  (Sens=0.812, Spec=0.857, Youden=0.669)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.530  (Sens=0.506, Spec=0.967, Youden=0.473)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.390  (Sens=0.647, Spec=0.959, Youden=0.606)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 17:20:20 - __main__ - INFO - 
+  YOUDEN_J (threshold=0.160):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.765, Spec=0.919
+2025-12-02 17:20:20 - __main__ - INFO -     TP=65, FP=67, TN=760, FN=20
+2025-12-02 17:20:20 - __main__ - INFO - 
+  COST_WEIGHTED (threshold=0.050):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.812, Spec=0.857
+2025-12-02 17:20:20 - __main__ - INFO -     TP=69, FP=118, TN=709, FN=16
+2025-12-02 17:20:20 - __main__ - INFO - 
+  MAX_SPECIFICITY (threshold=0.530):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.506, Spec=0.967
+2025-12-02 17:20:20 - __main__ - INFO -     TP=43, FP=27, TN=800, FN=42
+2025-12-02 17:20:20 - __main__ - INFO - 
+\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - __main__ - INFO - Cost Ratio = 20 (FN is 20x more costly than FP)
+2025-12-02 17:20:20 - __main__ - INFO - Minimum threshold = 0.05 (5%)
+2025-12-02 17:20:20 - __main__ - INFO - \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ThresholdOptimizer initialized: min_sensitivity=0.5, cost_ratio=20, step=0.01, min_threshold=0.05
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - Optimizing thresholds for 912 samples...
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Exceedances: 85 (9.32%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO -   Safe: 827 (90.68%)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - 
+======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - OPTIMAL THRESHOLDS:
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - youden_j            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - cost_weighted       : 0.050  (Sens=0.812, Spec=0.857, Youden=0.669)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - max_specificity     : 0.530  (Sens=0.506, Spec=0.967, Youden=0.473)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f1_score            : 0.390  (Sens=0.647, Spec=0.959, Youden=0.606)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - f2_score            : 0.160  (Sens=0.765, Spec=0.919, Youden=0.684)
+2025-12-02 17:20:20 - src.evaluation.threshold_optimization - INFO - ======================================================================
+
+2025-12-02 17:20:20 - __main__ - INFO - 
+  YOUDEN_J (threshold=0.160):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.765, Spec=0.919
+2025-12-02 17:20:20 - __main__ - INFO -     TP=65, FP=67, TN=760, FN=20
+2025-12-02 17:20:20 - __main__ - INFO - 
+  COST_WEIGHTED (threshold=0.050):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.812, Spec=0.857
+2025-12-02 17:20:20 - __main__ - INFO -     TP=69, FP=118, TN=709, FN=16
+2025-12-02 17:20:20 - __main__ - INFO - 
+  MAX_SPECIFICITY (threshold=0.530):
+2025-12-02 17:20:20 - __main__ - INFO -     Overall: Sens=0.506, Spec=0.967
+2025-12-02 17:20:20 - __main__ - INFO -     TP=43, FP=27, TN=800, FN=42
+2025-12-02 17:20:20 - __main__ - INFO - 
+================================================================================
+2025-12-02 17:20:20 - __main__ - INFO - SUMMARY COMPARISON TABLE
+2025-12-02 17:20:20 - __main__ - INFO - ================================================================================
+
+                   Method    Threshold Cost Ratio Sensitivity Specificity  TP  FP  FN
+Baseline (Point Forecast) 280 (direct)          -       0.718       0.931  61  57  24
+          youden_j (CR=5)        0.160          5       0.765       0.919  65  67  20
+     cost_weighted (CR=5)        0.050          5       0.812       0.857  69 118  16
+   max_specificity (CR=5)        0.530          5       0.506       0.967  43  27  42
+         youden_j (CR=10)        0.160         10       0.765       0.919  65  67  20
+    cost_weighted (CR=10)        0.050         10       0.812       0.857  69 118  16
+  max_specificity (CR=10)        0.530         10       0.506       0.967  43  27  42
+         youden_j (CR=20)        0.160         20       0.765       0.919  65  67  20
+    cost_weighted (CR=20)        0.050         20       0.812       0.857  69 118  16
+  max_specificity (CR=20)        0.530         20       0.506       0.967  43  27  42
+Traceback (most recent call last):
+  File "c:\atman_python\Dont-Swim-in-Data\scripts\compare_probability_vs_baseline.py", line 353, in <module>
+    main()
+  File "c:\atman_python\Dont-Swim-in-Data\scripts\compare_probability_vs_baseline.py", line 344, in main
+    json.dump(comparison_results, f, indent=4, default=str)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\json\__init__.py", line 179, in dump
+    for chunk in iterable:
+                 ^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\json\encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\json\encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\json\encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\json\encoder.py", line 377, in _iterencode_dict
+    raise TypeError(f'keys must be str, int, float, bool or None, '
+TypeError: keys must be str, int, float, bool or None, not int64

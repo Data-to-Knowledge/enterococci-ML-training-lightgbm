@@ -89,13 +89,14 @@ evaluation:
 pipeline:
   # models_to_train: ["probabilistic_framework", "matrix_decomposition_framework", "linear_regression", "decision_tree", "lightgbm"]
   random_seed: None
-  # models_to_process: ["lightgbm", "linear_regression", "decision_tree", "mlp"]
-  models_to_train: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
-  models_to_process: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
-  # models_to_train: ["probabilistic_framework"]
-  # models_to_process: ["probabilistic_framework"]
-  # models_to_train: ["matrix_decomposition_framework"]
-  # models_to_process: ["matrix_decomposition_framework"]
+
+  # FOCUS ON PROBABILISTIC FRAMEWORK (production model)
+  models_to_train: ["probabilistic_framework"]
+  models_to_process: ["probabilistic_framework"]
+
+  # To evaluate all models, uncomment below:
+  # models_to_train: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
+  # models_to_process: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
 
 prediction:
   model_name: ["probabilistic", "lightgbm", "matrix_decomposition_framework"]

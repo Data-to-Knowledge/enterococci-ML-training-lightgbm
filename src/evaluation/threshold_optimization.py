@@ -44,7 +44,8 @@ class ThresholdOptimizer:
         self,
         min_sensitivity: float = 0.5,
         cost_ratio: float = 7.0,
-        threshold_step: float = 0.01
+        threshold_step: float = 0.01,
+        min_threshold: float = 0.0
     ):
         """
         Initialize threshold optimizer.
@@ -65,13 +66,15 @@ class ThresholdOptimizer:
         self.min_sensitivity = min_sensitivity
         self.cost_ratio = cost_ratio
         self.threshold_step = threshold_step
+        self.min_threshold = min_threshold
         self.results = None
 
         logger.info(
             f"ThresholdOptimizer initialized: "
             f"min_sensitivity={min_sensitivity}, "
             f"cost_ratio={cost_ratio}, "
-            f"step={threshold_step}"
+            f"step={threshold_step}, "
+            f"min_threshold={min_threshold}"
         )
 
     def optimize(
@@ -106,7 +109,7 @@ class ThresholdOptimizer:
         logger.info(f"  Safe: {(1-y_true).sum()} ({100*(1-y_true.mean()):.2f}%)")
 
         # Step 1: Constraint-based search
-        thresholds = np.arange(0.01, 1.00, self.threshold_step)
+        thresholds = np.arange(max(self.min_threshold, 0.01), 1.00, self.threshold_step)
         results = []
 
         for thresh in thresholds:

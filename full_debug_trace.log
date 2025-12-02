@@ -1,0 +1,231 @@
+2025-12-02 18:15:40 - __main__ - INFO - Starting pipeline in all mode with config from C:\atman_python\Dont-Swim-in-Data\src\config\main_config.yaml
+2025-12-02 18:15:40 - src.data.feature_engineering - INFO - Loading configuration from C:\atman_python\Dont-Swim-in-Data\src\config\main_config.yaml
+2025-12-02 18:15:40 - src.data.feature_engineering - INFO - Configuration loaded successfully
+2025-12-02 18:15:40 - src.data.data_loader - INFO - Loading partially processed data from C:\atman_python\Dont-Swim-in-Data\data\interim\training_data.csv
+2025-12-02 18:15:40 - src.data.data_loader - INFO - Loaded 4171 rows and 81 features
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:38: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%m/%d/%y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:39: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = data['DateTime'].dt.strftime('%d/%m/%Y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:40: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='%d/%m/%Y %H:%M')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:41: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
+C:\atman_python\Dont-Swim-in-Data\src\data\preprocessing.py:43: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data.sort_values(by=['SITE_NAME', 'DateTime'], inplace=True)
+2025-12-02 18:15:40 - src.data.feature_engineering - INFO - Engineering features
+C:\atman_python\Dont-Swim-in-Data\src\data\feature_engineering.py:162: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
+2025-12-02 18:15:41 - src.data.feature_engineering - INFO - Feature engineering complete
+2025-12-02 18:15:41 - __main__ - INFO - Wrote cleaned snapshot to data\processed\cleaned_training_data_up_to_2024.csv | rows=4163, cols=42 | span: 2013-11-12 10:00:00 \u2192 2024-07-31 13:00:00
+2025-12-02 18:15:41 - __main__ - INFO - Processed data: (4163, 42) rows, 42 columns
+2025-12-02 18:15:41 - __main__ - INFO - Training models...
+2025-12-02 18:15:41 - __main__ - INFO - Training probabilistic_framework...
+2025-12-02 18:15:55 - __main__ - INFO - Model probabilistic_framework saved to models\probabilistic_framework.joblib
+2025-12-02 18:15:55 - src.evaluation.cross_validation - INFO - Initialized Time-Series CV with 3 periods
+2025-12-02 18:15:55 - __main__ - INFO - Evaluating models: probabilistic_framework
+2025-12-02 18:15:55 - src.evaluation.cross_validation - INFO - Split 1: Train size=2743, Test size=221
+2025-12-02 18:15:55 - src.evaluation.cross_validation - INFO - Split 2: Train size=3134, Test size=285
+2025-12-02 18:15:55 - src.evaluation.cross_validation - INFO - Split 3: Train size=3572, Test size=406
+2025-12-02 18:15:55 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_1
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for test dataset:
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - TP: 14.0000
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - FP: 16.0000
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - TN: 184.0000
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - FN: 7.0000
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - rmse: 350.4918
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - rmse_safe: 188.7218
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - rmse_exceedance: 976.5209
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - wmape_safe: 220.3048
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - wmape_exceedance: 63.3023
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - sensitivity: 0.6667
+2025-12-02 18:16:07 - src.evaluation.evaluator - INFO - specificity: 0.9200
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - Evaluation on fold fold_1 for train dataset:
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - TP: 68.0000
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - FP: 29.0000
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - TN: 2624.0000
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - FN: 22.0000
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - rmse: 166.7331
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - rmse_safe: 73.1312
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - rmse_exceedance: 830.4382
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - wmape_safe: 98.2408
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - wmape_exceedance: 40.6740
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - sensitivity: 0.7556
+2025-12-02 18:16:10 - src.evaluation.evaluator - INFO - specificity: 0.9891
+2025-12-02 18:16:10 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_2
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for test dataset:
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - TP: 22.0000
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - FP: 7.0000
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - TN: 248.0000
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - FN: 8.0000
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - rmse: 704.4590
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - rmse_safe: 139.3380
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - rmse_exceedance: 2132.9475
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - wmape_safe: 208.5914
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - wmape_exceedance: 67.8194
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - sensitivity: 0.7333
+2025-12-02 18:16:22 - src.evaluation.evaluator - INFO - specificity: 0.9725
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - Evaluation on fold fold_2 for train dataset:
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - TP: 95.0000
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - FP: 34.0000
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - TN: 2976.0000
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - FN: 29.0000
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - rmse: 178.7023
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - rmse_safe: 66.1399
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - rmse_exceedance: 837.2169
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - wmape_safe: 93.1439
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - wmape_exceedance: 40.6253
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - sensitivity: 0.7661
+2025-12-02 18:16:26 - src.evaluation.evaluator - INFO - specificity: 0.9887
+2025-12-02 18:16:26 - src.evaluation.time_series_evaluator - INFO - Evaluating probabilistic_framework on fold_3
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for test dataset:
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - TP: 22.0000
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - FP: 38.0000
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - TN: 334.0000
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - FN: 12.0000
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - rmse: 626.5627
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - rmse_safe: 374.5099
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - rmse_exceedance: 1775.7514
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - wmape_safe: 419.5654
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - wmape_exceedance: 72.1616
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - sensitivity: 0.6471
+2025-12-02 18:16:39 - src.evaluation.evaluator - INFO - specificity: 0.8978
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - Evaluation on fold fold_3 for train dataset:
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - TP: 128.0000
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - FP: 44.0000
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - TN: 3370.0000
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - FN: 30.0000
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - rmse: 209.2851
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - rmse_safe: 78.6643
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - rmse_exceedance: 925.4779
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - wmape_safe: 92.0670
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - wmape_exceedance: 37.4920
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - sensitivity: 0.8101
+2025-12-02 18:16:42 - src.evaluation.evaluator - INFO - specificity: 0.9871
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - Overall evaluation results for probabilistic_framework:
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - TP: 58.0000
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - FP: 61.0000
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - TN: 766.0000
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - FN: 27.0000
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - rmse: 599.6812
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - rmse_safe: 278.7298
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - rmse_exceedance: 1761.4211
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - wmape_safe: 308.7403
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - wmape_exceedance: 68.6355
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - sensitivity: 0.6824
+2025-12-02 18:16:42 - src.evaluation.time_series_evaluator - INFO - specificity: 0.9262
+
+
+---------------------------------
+FORECAST PERFORMANCE (MODEL: <src.models.probabilistic.main_probabilistic.ProbabilisticForecastingModel object at 0x00000236B62DE7E0>)
+---------------------------------
+-----
+TRAINING PERFORMANCE (2013-10-01 00:00:00 - 2023-10)
+
+
+Accuracy: 0.9801
+Sensitivity/Recall (EXCEEDANCE): 0.7823
+Specificity/Recall (SAFE): 0.9882
+Precision (SAFE): 0.9911
+Precision (EXCEEDANCE): 0.7312
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 291
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 81
+True Negatives (TRUE: SAFE, MODEL: SAFE): 8970
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 107
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 351
+
+
+Weighted MAPE: 0.5339
+Log-Weighted MAPE: 0.2317
+MAE: 37.3777
+Weighted MAPE (EXCEEDANCE): 0.3922
+Log-Weighted MAPE (EXCEEDANCE): 0.0857
+MAE (EXCEEDANCE): 517.4435
+Weighted MAPE (SAFE): 0.941
+Log-Weighted MAPE (SAFE): 0.2491
+MAE (SAFE): 17.7033
+-----
+
+
+-----
+TEST PERFORMANCE (2021-10 - 2024-10))
+
+
+Accuracy: 0.9035
+Sensitivity/Recall (EXCEEDANCE): 0.6824
+Specificity/Recall (SAFE): 0.9262
+Specificity/Recall (PRECAUTIONARY): 0.7882
+Precision (SAFE): 0.966
+Precision (EXCEEDANCE): 0.4874
+F-2 Score: 0.6318
+True Positives (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE): 58
+False Negatives (TRUE: EXCEEDANCE, MODEL: SAFE): 27
+True Negatives (TRUE: SAFE, MODEL: SAFE): 766
+False Positives (TRUE: SAFE, MODEL: EXCEEDANCE): 61
+Precautionary Cases (TRUE: EXCEEDANCE, MODEL: EXCEEDANCE/WARNING): 67
+
+
+RMSE: 1.6007
+NRMSE: 21.5761
+Weighted MAPE: 1.051
+Log-Weighted MAPE: 0.421
+MAE: 183.7906
+log-R2: 0.051
+Weighted MAPE (EXCEEDANCE): 0.6864
+Log-Weighted MAPE (EXCEEDANCE): 0.1737
+MAE (EXCEEDANCE): 1092.2
+Weighted MAPE (SAFE): 3.0874
+Log-Weighted MAPE (SAFE): 0.4872
+MAE (SAFE): 90.4232
+NRMSE (EXCEEDANCE): 18.1309
+NRMSE (SAFE): 102.0988
+R2 (EXCEEDANCE): -1.9469
+R2 (SAFE): -1.1181
+log-R2: 0.051
+-----
+------------------------------------------------------------------
+
+
+Traceback (most recent call last):
+  File "C:\atman_python\Dont-Swim-in-Data\src\pipeline\main_pipeline.py", line 486, in <module>
+    app = run_pipeline(MAIN_CONFIG_PATH, "all")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\atman_python\Dont-Swim-in-Data\src\pipeline\main_pipeline.py", line 114, in run_pipeline
+    ts_evaluator.generate_report(model_report_path)
+  File "C:\atman_python\Dont-Swim-in-Data\src\evaluation\evaluator.py", line 293, in generate_report
+    value.to_csv(csv_path, index=False)
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\core\generic.py", line 3967, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\formats\format.py", line 1014, in to_csv
+    csv_formatter.save()
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\formats\csvs.py", line 251, in save
+    with get_handle(
+         ^^^^^^^^^^^
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+  File "C:\Users\AtmanD\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pandas\io\common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: 'reports'

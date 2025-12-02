@@ -1,0 +1,222 @@
+{
+    "fold_results": {
+        "fold_1": {
+            "optimal_thresholds": {
+                "youden_j": 0.03,
+                "cost_weighted": 0.01,
+                "max_specificity": 0.29000000000000004,
+                "f1_score": 0.03,
+                "f2_score": 0.03
+            },
+            "metrics": {
+                "youden_j": {
+                    "TP": 23,
+                    "FP": 47,
+                    "TN": 310,
+                    "FN": 11,
+                    "sensitivity": 0.6764705882352942,
+                    "specificity": 0.8683473389355743,
+                    "precision": 0.32857142857142857,
+                    "youden_j": 0.5448179271708684,
+                    "threshold_used": 0.03
+                },
+                "cost_weighted": {
+                    "TP": 28,
+                    "FP": 187,
+                    "TN": 170,
+                    "FN": 6,
+                    "sensitivity": 0.8235294117647058,
+                    "specificity": 0.47619047619047616,
+                    "precision": 0.13023255813953488,
+                    "youden_j": 0.2997198879551819,
+                    "threshold_used": 0.01
+                },
+                "max_specificity": {
+                    "TP": 17,
+                    "FP": 26,
+                    "TN": 331,
+                    "FN": 17,
+                    "sensitivity": 0.5,
+                    "specificity": 0.927170868347339,
+                    "precision": 0.3953488372093023,
+                    "youden_j": 0.427170868347339,
+                    "threshold_used": 0.29000000000000004
+                },
+                "point_forecast_baseline": {
+                    "TP": 17,
+                    "FP": 30,
+                    "TN": 327,
+                    "FN": 17,
+                    "sensitivity": 0.5,
+                    "specificity": 0.9159663865546218,
+                    "threshold_used": 280.0
+                }
+            }
+        },
+        "fold_2": {
+            "optimal_thresholds": {
+                "youden_j": 0.15000000000000002,
+                "cost_weighted": 0.01,
+                "max_specificity": 0.48000000000000004,
+                "f1_score": 0.46,
+                "f2_score": 0.15000000000000002
+            },
+            "metrics": {
+                "youden_j": {
+                    "TP": 26,
+                    "FP": 16,
+                    "TN": 388,
+                    "FN": 8,
+                    "sensitivity": 0.7647058823529411,
+                    "specificity": 0.9603960396039604,
+                    "precision": 0.6190476190476191,
+                    "youden_j": 0.7251019219569015,
+                    "threshold_used": 0.15000000000000002
+                },
+                "cost_weighted": {
+                    "TP": 29,
+                    "FP": 183,
+                    "TN": 221,
+                    "FN": 5,
+                    "sensitivity": 0.8529411764705882,
+                    "specificity": 0.5470297029702971,
+                    "precision": 0.13679245283018868,
+                    "youden_j": 0.39997087944088516,
+                    "threshold_used": 0.01
+                },
+                "max_specificity": {
+                    "TP": 20,
+                    "FP": 4,
+                    "TN": 400,
+                    "FN": 14,
+                    "sensitivity": 0.5882352941176471,
+                    "specificity": 0.9900990099009901,
+                    "precision": 0.8333333333333334,
+                    "youden_j": 0.5783343040186373,
+                    "threshold_used": 0.48000000000000004
+                },
+                "point_forecast_baseline": {
+                    "TP": 23,
+                    "FP": 13,
+                    "TN": 391,
+                    "FN": 11,
+                    "sensitivity": 0.6764705882352942,
+                    "specificity": 0.9678217821782178,
+                    "threshold_used": 280.0
+                }
+            }
+        },
+        "fold_3": {
+            "optimal_thresholds": {
+                "youden_j": 0.19,
+                "cost_weighted": 0.01,
+                "max_specificity": 0.46,
+                "f1_score": 0.39,
+                "f2_score": 0.19
+            },
+            "metrics": {
+                "youden_j": {
+                    "TP": 32,
+                    "FP": 53,
+                    "TN": 494,
+                    "FN": 12,
+                    "sensitivity": 0.7272727272727273,
+                    "specificity": 0.903107861060329,
+                    "precision": 0.3764705882352941,
+                    "youden_j": 0.6303805883330562,
+                    "threshold_used": 0.19
+                },
+                "cost_weighted": {
+                    "TP": 42,
+                    "FP": 275,
+                    "TN": 272,
+                    "FN": 2,
+                    "sensitivity": 0.9545454545454546,
+                    "specificity": 0.49725776965265084,
+                    "precision": 0.13249211356466878,
+                    "youden_j": 0.45180322419810537,
+                    "threshold_used": 0.01
+                },
+                "max_specificity": {
+                    "TP": 22,
+                    "FP": 25,
+                    "TN": 522,
+                    "FN": 22,
+                    "sensitivity": 0.5,
+                    "specificity": 0.9542961608775137,
+                    "precision": 0.46808510638297873,
+                    "youden_j": 0.4542961608775138,
+                    "threshold_used": 0.46
+                },
+                "point_forecast_baseline": {
+                    "TP": 31,
+                    "FP": 51,
+                    "TN": 496,
+                    "FN": 13,
+                    "sensitivity": 0.7045454545454546,
+                    "specificity": 0.906764168190128,
+                    "threshold_used": 280.0
+                }
+            }
+        }
+    },
+    "overall": {
+        "optimal_thresholds": {
+            "youden_j": 0.03,
+            "cost_weighted": 0.01,
+            "max_specificity": 0.48000000000000004,
+            "f1_score": 0.39,
+            "f2_score": 0.16
+        },
+        "metrics": {
+            "youden_j": {
+                "TP": 87,
+                "FP": 227,
+                "TN": 1081,
+                "FN": 25,
+                "sensitivity": 0.7767857142857143,
+                "specificity": 0.8264525993883792,
+                "precision": 0.2770700636942675,
+                "youden_j": 0.6032383136740935,
+                "threshold_used": 0.03
+            },
+            "cost_weighted": {
+                "TP": 99,
+                "FP": 645,
+                "TN": 663,
+                "FN": 13,
+                "sensitivity": 0.8839285714285714,
+                "specificity": 0.5068807339449541,
+                "precision": 0.13306451612903225,
+                "youden_j": 0.39080930537352554,
+                "threshold_used": 0.01
+            },
+            "max_specificity": {
+                "TP": 57,
+                "FP": 41,
+                "TN": 1267,
+                "FN": 55,
+                "sensitivity": 0.5089285714285714,
+                "specificity": 0.9686544342507645,
+                "precision": 0.5816326530612245,
+                "youden_j": 0.47758300567933576,
+                "threshold_used": 0.48000000000000004
+            },
+            "point_forecast_baseline": {
+                "TP": 71,
+                "FP": 94,
+                "TN": 1214,
+                "FN": 41,
+                "sensitivity": 0.6339285714285714,
+                "specificity": 0.9281345565749235,
+                "threshold_used": 280.0
+            }
+        }
+    },
+    "config": {
+        "min_sensitivity": 0.5,
+        "cost_ratio": 7.0,
+        "threshold_step": 0.01,
+        "exceedance_threshold": 280
+    }
+}

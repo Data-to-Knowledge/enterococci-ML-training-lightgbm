@@ -107,9 +107,17 @@ def run_pipeline(config_path: str, mode: str):
                 config["data"].get("target_column", "Enterococci")
             )
             test_forecast[model_name] = test_pred
-        report_path = Path(config["evaluation"].get("report_path", "reports/evaluation_results.json"))
-        ts_evaluator.generate_report(report_path)
-        logger.info(f"Evaluation report saved to {report_path}")
+
+            # Save model-specific results
+            report_path = Path(config["evaluation"].get("report_path", "reports/evaluation_results.json"))
+            model_report_path = report_path.parent / f"{model_name}_evaluation_results.json"
+            ts_evaluator.generate_report(model_report_path)
+            logger.info(f"Evaluation report for {model_name} saved to {model_report_path}")
+
+            # For probabilistic_framework, also save to the main evaluation_results.json
+            if model_name == "probabilistic_framework":
+                ts_evaluator.generate_report(report_path)
+                logger.info(f"Probabilistic framework results also saved to {report_path}")
 
     if mode in ["predict", "all"]:
         pred_config = config.get("prediction", {})
@@ -478,4 +486,4 @@ if __name__ == "__main__":
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")
-    app.run(debug=False, port=8501)
+    app.run(debug=False, port=8502)

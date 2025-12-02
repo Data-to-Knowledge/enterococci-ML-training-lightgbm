@@ -63,7 +63,7 @@
                 "specificity": 0.9262394195888755
             }
         },
-        "fold_predictions": "Saved to evaluation_results_fold_predictions.csv",
+        "fold_predictions": "Saved to probabilistic_framework_evaluation_results_fold_predictions.csv",
         "fold_predictions_summary": {
             "shape": [
                 912,
