@@ -87,15 +87,15 @@ evaluation:
   report_path: "reports/evaluation_results.json"
 
 pipeline:
-  # models_to_train: ["probabilistic_framework", "matrix_decomposition_framework", "linear_regression", "decision_tree", "lightgbm"]
   random_seed: None
-  # models_to_process: ["lightgbm", "linear_regression", "decision_tree", "mlp"]
-  models_to_train: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
-  models_to_process: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
-  # models_to_train: ["probabilistic_framework"]
-  # models_to_process: ["probabilistic_framework"]
-  # models_to_train: ["matrix_decomposition_framework"]
-  # models_to_process: ["matrix_decomposition_framework"]
+
+  # ONLY PROBABILISTIC FRAMEWORK (production model)
+  models_to_train: ["probabilistic_framework"]
+  models_to_process: ["probabilistic_framework"]
+
+  # To train/evaluate all models, use:
+  # models_to_train: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
+  # models_to_process: ["probabilistic_framework", "lightgbm", "matrix_decomposition_framework"]
 
 prediction:
   model_name: ["probabilistic", "lightgbm", "matrix_decomposition_framework"]
