@@ -478,4 +478,4 @@ if __name__ == "__main__":
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")
-    app.run(debug=False, port=8504)
+    app.run(debug=False, port=8510)
