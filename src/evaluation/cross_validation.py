@@ -68,6 +68,7 @@ class TimeSeriesCV:
             'Timaru Coast Caroline Bay at Virtue Avenue',
             'Timaru Coast at yacht club jetty',
             'Taylors Mistake Beach Surf club'
+            # Temporarily include Governors Bay and Cass Bay to restore Wainui performance
             # 'Governors Bay Sandy Beach',
             # 'Cass Bay at boat ramp'
         ]
