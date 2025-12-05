@@ -11,19 +11,6 @@
     "results": {
         "fold_results": {
             "fold_1": {
-                "TP": 16,
-                "FP": 21,
-                "TN": 206,
-                "FN": 13,
-                "rmse": 437.4763922201974,
-                "rmse_safe": 234.14681564679253,
-                "rmse_exceedance": 1122.643094327569,
-                "wmape_safe": 253.37492202121024,
-                "wmape_exceedance": 62.40154834547458,
-                "sensitivity": 0.5517241379310345,
-                "specificity": 0.9074889867841409
-            },
-            "fold_2": {
                 "TP": 24,
                 "FP": 13,
                 "TN": 286,
@@ -36,37 +23,50 @@
                 "sensitivity": 0.7058823529411765,
                 "specificity": 0.9565217391304348
             },
+            "fold_2": {
+                "TP": 38,
+                "FP": 47,
+                "TN": 384,
+                "FN": 12,
+                "rmse": 694.5571391488389,
+                "rmse_safe": 486.48884306996655,
+                "rmse_exceedance": 1612.6602618034588,
+                "wmape_safe": 479.7856165424966,
+                "wmape_exceedance": 69.9360518229383,
+                "sensitivity": 0.76,
+                "specificity": 0.8909512761020881
+            },
             "fold_3": {
-                "TP": 28,
-                "FP": 43,
-                "TN": 378,
-                "FN": 9,
-                "rmse": 687.0306575795206,
-                "rmse_safe": 476.1420774409028,
-                "rmse_exceedance": 1806.4123545288862,
-                "wmape_safe": 482.62833675564684,
-                "wmape_exceedance": 72.78859125072269,
-                "sensitivity": 0.7567567567567568,
-                "specificity": 0.8978622327790974
+                "TP": 30,
+                "FP": 21,
+                "TN": 453,
+                "FN": 35,
+                "rmse": 736.7402806874238,
+                "rmse_safe": 109.00484834182981,
+                "rmse_exceedance": 2101.024252047631,
+                "wmape_safe": 156.3728409767719,
+                "wmape_exceedance": 77.01626792374842,
+                "sensitivity": 0.46153846153846156,
+                "specificity": 0.9556962025316456
             },
             "overall": {
-                "TP": 68,
-                "FP": 77,
-                "TN": 870,
-                "FN": 32,
-                "rmse": 647.2195309931162,
-                "rmse_safe": 351.09617301143214,
-                "rmse_exceedance": 1794.006151048541,
-                "wmape_safe": 340.19618146785774,
-                "wmape_exceedance": 70.65968966077747,
-                "sensitivity": 0.68,
-                "specificity": 0.9186906019007391
+                "TP": 92,
+                "FP": 81,
+                "TN": 1123,
+                "FN": 57,
+                "rmse": 718.2583960034273,
+                "rmse_safe": 311.04007150162215,
+                "rmse_exceedance": 1975.5621186294695,
+                "wmape_safe": 280.44335361236585,
+                "wmape_exceedance": 73.9131886895642,
+                "sensitivity": 0.6174496644295302,
+                "specificity": 0.9327242524916943
             }
         },
         "fold_predictions": "Saved to evaluation_results_fold_predictions.csv",
         "fold_predictions_summary": {
             "shape": [
-                1047,
+                1353,
                 16
             ],
             "columns": [
