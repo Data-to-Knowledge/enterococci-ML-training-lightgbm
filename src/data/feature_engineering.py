@@ -79,11 +79,14 @@ class FeatureEngineer:
         df['WEEKEND'] = df['DateTime'].dt.dayofweek.isin([5, 6]).astype(int)
         df['TIME_OF_DAY'] = df['DateTime'].dt.hour  # Extracting time of day
 
-        # Create Season column (swimming season year format: "2013-2014")
-        # Swimming season runs from October to September (e.g., Oct 2013 - Sep 2014 = "2013-2014")
-        df['Season'] = df['YEAR'].astype(str) + '-' + (df['YEAR'] + 1).astype(str)
-        # Adjust for months before October (Jan-Sep belong to previous season year)
-        df.loc[df['MONTH'] < 10, 'Season'] = (df['YEAR'] - 1).astype(str) + '-' + df['YEAR'].astype(str)
+        # Season column should already exist in the training data
+        # If it doesn't exist, create it (for backward compatibility)
+        if 'Season' not in df.columns:
+            # Create Season column (swimming season year format: "2013-2014")
+            # Swimming season runs from October to September (e.g., Oct 2013 - Sep 2014 = "2013-2014")
+            df['Season'] = df['YEAR'].astype(str) + '-' + (df['YEAR'] + 1).astype(str)
+            # Adjust for months before October (Jan-Sep belong to previous season year)
+            df.loc[df['MONTH'] < 10, 'Season'] = (df['YEAR'] - 1).astype(str) + '-' + df['YEAR'].astype(str)
 
         # Define New Zealand public holidays as a dictionary with date ranges
         HOLIDAY_DATE_DATA = {
