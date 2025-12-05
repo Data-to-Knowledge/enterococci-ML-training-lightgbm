@@ -135,53 +135,53 @@ class FeatureEngineer:
 
         return X
     
-    def lagged_enterococci_features(self, data):
-        """
-        Adds Site_Season_Average (rolling mean of last 5, shifted) and 
-        Site_Historical_Exceedance_Rate (manual proportion of previous exceedances per site-season, shifted)
-        to the provided DataFrame. Matches inference logic.
+    # def lagged_enterococci_features(self, data):
+    #     """
+    #     Adds Site_Season_Average (rolling mean of last 5, shifted) and 
+    #     Site_Historical_Exceedance_Rate (manual proportion of previous exceedances per site-season, shifted)
+    #     to the provided DataFrame. Matches inference logic.
 
-        Parameters:
-        data (pd.DataFrame): Must contain columns ['SITE_NAME', 'DateTime', 'Season', 'Enterococci']
+    #     Parameters:
+    #     data (pd.DataFrame): Must contain columns ['SITE_NAME', 'DateTime', 'Season', 'Enterococci']
 
-        Returns:
-        pd.DataFrame: Updated with lagged features.
-        """
+    #     Returns:
+    #     pd.DataFrame: Updated with lagged features.
+    #     """
 
-        data = data.copy()
-        data["DateTime"] = pd.to_datetime(data["DateTime"])
-        data["Season"] = data["Season"].astype("category")
-        data["SITE_NAME"] = data["SITE_NAME"].astype("category")
-        data = data.sort_values(by=["SITE_NAME", "Season", "DateTime"])
+    #     data = data.copy()
+    #     data["DateTime"] = pd.to_datetime(data["DateTime"])
+    #     data["Season"] = data["Season"].astype("category")
+    #     data["SITE_NAME"] = data["SITE_NAME"].astype("category")
+    #     data = data.sort_values(by=["SITE_NAME", "Season", "DateTime"])
 
-        # Prepare new columns
-        data["Site_Season_Average"] = np.nan
-        data["Site_Historical_Exceedance_Rate"] = np.nan
+    #     # Prepare new columns
+    #     data["Site_Season_Average"] = np.nan
+    #     data["Site_Historical_Exceedance_Rate"] = np.nan
 
-        # Manual rolling/expanding for each group (site, season)
-        for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
-            idxs = group.index
-            for i, idx in enumerate(idxs):
-                prior = group.loc[idxs[:i], 'Enterococci']
-                if len(prior) > 0:
-                    # Rolling mean of previous 5 samples (shifted)
-                    data.at[idx, "Site_Season_Average"] = prior[-5:].mean()
-                    # Manual exceedance rate
-                    n_prev = len(prior)
-                    n_exceed = (prior > 280).sum()
-                    data.at[idx, "Site_Historical_Exceedance_Rate"] = n_exceed / n_prev
-                # else: remain NaN
+    #     # Manual rolling/expanding for each group (site, season)
+    #     for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
+    #         idxs = group.index
+    #         for i, idx in enumerate(idxs):
+    #             prior = group.loc[idxs[:i], 'Enterococci']
+    #             if len(prior) > 0:
+    #                 # Rolling mean of previous 5 samples (shifted)
+    #                 data.at[idx, "Site_Season_Average"] = prior[-5:].mean()
+    #                 # Manual exceedance rate
+    #                 n_prev = len(prior)
+    #                 n_exceed = (prior > 280).sum()
+    #                 data.at[idx, "Site_Historical_Exceedance_Rate"] = n_exceed / n_prev
+    #             # else: remain NaN
 
-        # Restore original order if needed
-        data = data.sort_values(by=["SITE_NAME", "DateTime"])
+    #     # Restore original order if needed
+    #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
 
-        # (Optional) Remove columns if not needed
-        if "YEAR" in data.columns:
-            data.drop(columns=["YEAR"], inplace=True)
-        if "Season" in data.columns:
-            data.drop(columns=["Season"], inplace=True)
+    #     # (Optional) Remove columns if not needed
+    #     if "YEAR" in data.columns:
+    #         data.drop(columns=["YEAR"], inplace=True)
+    #     if "Season" in data.columns:
+    #         data.drop(columns=["Season"], inplace=True)
 
-        return data
+    #     return data
 
 
     def lagged_enterococci_features(self, data):

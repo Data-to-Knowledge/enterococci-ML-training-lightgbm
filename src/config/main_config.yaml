@@ -23,21 +23,36 @@ models:
     quantiles: [0.20, 0.35, 0.50, 0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.925, 0.95, 0.975]
     meta_learner: false
     calibration: true
+    
+    # lgb_params:
+    #   # Tuned to improve sensitivity on rare exceedance events (e.g., Wainui)
+    #   n_estimators: 250                # More trees for better learning
+    #   learning_rate: 0.04              # Lower LR for smoother learning
+    #   num_leaves: 31                   # Reduced from 40 to prevent overfitting
+    #   min_data_in_leaf: 20             # Increased from 5 to force more generalization
+    #   colsample_bytree: 0.7            # Lower feature sampling for robustness
+    #   subsample: 0.8                   # Row sampling to reduce overfitting
+    #   subsample_freq: 1                # Apply row sampling every iteration
+    #   reg_alpha: 0.05                  # L1 regularization for feature selection
+    #   reg_lambda: 1.5                  # Stronger L2 regularization (was 0.65)
+    #   min_child_weight: 0.01           # Minimum sum of hessian in leaf
+    #   boosting_type: 'gbdt'
+    #   max_bin: 255                     # Standard bin count
+    #   max_depth: 5  
+    
     lgb_params:
-      # Tuned to improve sensitivity on rare exceedance events (e.g., Wainui)
-      n_estimators: 250                # More trees for better learning
-      learning_rate: 0.04              # Lower LR for smoother learning
-      num_leaves: 31                   # Reduced from 40 to prevent overfitting
-      min_data_in_leaf: 20             # Increased from 5 to force more generalization
-      colsample_bytree: 0.7            # Lower feature sampling for robustness
-      subsample: 0.8                   # Row sampling to reduce overfitting
-      subsample_freq: 1                # Apply row sampling every iteration
-      reg_alpha: 0.05                  # L1 regularization for feature selection
-      reg_lambda: 1.5                  # Stronger L2 regularization (was 0.65)
-      min_child_weight: 0.01           # Minimum sum of hessian in leaf
+      n_estimators: 250
+      learning_rate: 0.04
+      num_leaves: 31
+      min_data_in_leaf: 10
+      colsample_bytree: 0.8
+      reg_alpha: 0.05
+      reg_lambda: 0.65
+      min_child_weight: 0.01
       boosting_type: 'gbdt'
-      max_bin: 255                     # Standard bin count
+      max_bin: 255
       max_depth: 5                     # Limit tree depth to prevent overfitting
+
     meta_learner_tune: False
     meta_learner_params:
       n_estimators: 100
