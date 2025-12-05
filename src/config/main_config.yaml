@@ -103,8 +103,9 @@ evaluation:
   cross_validation:
     method: "time_series_cv"
     n_splits: 3
-    test_periods: ["2021-10-01_2022-10-01", "2022-10-01_2023-10-01", "2023-10-01_2024-10-01"]
-    # test_periods: ["2023-10-01_2024-10-01"]
+    # Updated to use 2022-2025 seasons (was 2021-2024)
+    test_periods: ["2022-10-01_2023-10-01", "2023-10-01_2024-10-01", "2024-10-01_2025-10-01"]
+    # Previous periods (2021-2024): ["2021-10-01_2022-10-01", "2022-10-01_2023-10-01", "2023-10-01_2024-10-01"]
   report_path: "reports/evaluation_results.json"
 
 pipeline:

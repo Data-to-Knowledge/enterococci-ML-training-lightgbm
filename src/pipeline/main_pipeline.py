@@ -57,18 +57,18 @@ def run_pipeline(config_path: str, mode: str):
     data = feature_engineer.engineer_features(data)
     data = preprocessor.transform_catergorical_variable_type(data)
 
-    # === canonical cleaned snapshot (≤ 2024-12-31) ===
+    # === canonical cleaned snapshot (≤ 2025-09-30) ===
     date_column = config["data"].get("date_column", "DateTime")
 
     # ensure datetime is parsed consistently (day-first, 4-digit years)
     data[date_column] = pd.to_datetime(data[date_column], dayfirst=True, errors="coerce")
 
-    cutoff = pd.Timestamp("2024-12-31 23:59:59")
+    cutoff = pd.Timestamp("2025-09-30 23:59:59")
     clean_snapshot = data.loc[data[date_column] <= cutoff].copy()
 
     outdir = Path("data/processed")
     outdir.mkdir(parents=True, exist_ok=True)
-    outpath = outdir / "cleaned_training_data_up_to_2024.csv"
+    outpath = outdir / "cleaned_training_data_up_to_2025.csv"
 
     clean_snapshot.to_csv(outpath, index=False)
 
@@ -245,4 +245,4 @@ if __name__ == "__main__":
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")
-    app.run(debug=False, port=8514)
+    app.run(debug=False, port=8520)
