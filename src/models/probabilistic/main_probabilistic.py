@@ -418,53 +418,79 @@ class ProbabilisticForecastingModel:
     # ─────────────────────────────────────────────────────────────
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Generate probabilistic and point forecasts.
+        Generate probabilistic and point forecasts with full inference-style output.
 
         Steps
         -----
-        1.  Add dummy “DateTime” column (LightGBM-compat).
-        2.  Use the trained quantile ensemble to get the 12 quantile
-            predictions for every row in *X*.
-        3.  If the meta-learner is enabled *and* fitted, use it to
-            produce the point forecast; otherwise fall back to the
-            median of the quantiles.
-        4.  Enforce domain constraints and return a DataFrame that
-            contains:
-                • q_0.20 … q_0.975   (12 columns)
-                • predictions         (point forecast column)
+        1.  Raw quantile outputs q_*_raw (audit / SHAP alignment)
+        2.  Isotonic regression q_* (monotone, τ-aligned)
+        3.  Median(iso-adjusted) → predictions
+        4.  CDF on mono grid → prob_exceed_280
+        5.  Traffic-light label → risk_label
+        6.  Alert level → Enterococci Alert Level (1/3)
+        7.  Timestamp → time_UTC (top-of-hour)
+        8.  Calendar date → date (YYYY-MM-DD)
         """
-        self.logger.info("Generating forecasts with ProbabilisticFramework")
+        self.logger.info("Prob-forecast predict(): raw → mono → median.")
 
-        # 1️⃣ make a copy & inject dummy DateTime
+        # ── 0. Prep ────────────────────────────────────────────────
         X = X.copy()
         X["DateTime"] = 0
 
-        # 2️⃣ stage-1: quantile forecasts
-        quantile_preds = self.quantile_ensemble.predict(X)
-        quantile_preds = self.apply_enterococci_constraints(quantile_preds)
-        # quantile_preds = self.monotonic_sort_quantiles(
-        #     quantile_preds, quantile_preds.columns
-        # )
+        # ── 1. RAW quantile ensemble outputs ───────────────────────
+        q_raw = self.quantile_ensemble.predict(X)
+        q_raw = self.apply_enterococci_constraints(q_raw)   # ≥5, int
 
-        quantile_preds = self.apply_isotonic_monotonicity(quantile_preds)
+        raw_cols = {c: f"{c}_raw" for c in q_raw.columns}
+        q_raw_audit = q_raw.rename(columns=raw_cols)
 
-        # 3️⃣ stage-2: point forecast (stacker if available)
+        # ── 2. Cascading-max monotone fix ──────────────────────────
+        q_mono = self.apply_isotonic_monotonicity(q_raw.copy())
+
+        # ── 3. Point forecast (median of mono grid) ────────────────
         if self.use_meta_learner and getattr(self, "meta_learner", None) is not None:
-            point_forecast = pd.Series(
-                self.meta_learner.predict(quantile_preds),
-                index=quantile_preds.index,
+            point_pred = pd.Series(
+                self.meta_learner.predict(q_mono),
+                index=q_mono.index,
                 name="predictions",
             )
         else:
-            # graceful fallback → median of the 12 quantiles
-            point_forecast = quantile_preds.median(axis=1).rename("predictions")
+            point_pred = q_mono.median(axis=1)
 
-        # 4️⃣ assemble output & final constraints
-        results = quantile_preds.copy()
-        results["predictions"] = point_forecast
-        results = self.apply_enterococci_constraints(results)
+        # ── 4. Exceedance probability on mono grid ────────────────
+        q_cols = sorted(q_mono.columns, key=lambda x: float(x.split("_")[1]))
+        taus   = np.array([float(c.split("_")[1]) for c in q_cols])
+        prob_unsafe = self._prob_exceed_vectorised(
+            q_mono[q_cols].to_numpy(float), taus, 280.0)
 
-        return results
+        # ── 5. Risk label ─────────────────────────────────────────
+        risk = pd.cut(point_pred,
+                    bins=[-np.inf, 280, np.inf],
+                    labels=["SAFE", "EXCEED"],
+                    right=True, include_lowest=True).astype(str)
+
+        # ── 6. Enterococci Alert Level ────────────────────────────
+        alert_level = (point_pred > 280).astype(np.int8) * 2 + 1  # >280 → 3, else 1
+
+        # ── 7. time_UTC ──────────────────────────────────────────
+        time_utc = pd.Timestamp.now(tz="UTC").floor("h")
+
+        # ── 8. date (derived from time_UTC) ──────────────────────
+        date_val = time_utc.date()
+
+        # ── 9. Assemble output ───────────────────────────────────
+        out = pd.concat([q_mono, q_raw_audit], axis=1)
+        out["predictions"]             = point_pred
+        out["prob_exceed_280"]         = prob_unsafe
+        out["risk_label"]              = risk
+        out["Enterococci Alert Level"] = alert_level.astype("int64")
+        out["time_UTC"]                = time_utc
+        out["date"]                    = date_val
+
+        out[q_cols + ["predictions"]] = self.apply_enterococci_constraints(
+            out[q_cols + ["predictions"]])
+
+        return out
 
     
 # ---------------------------------------------------------------------------
@@ -626,10 +652,10 @@ class ProbabilisticForecastingModel:
     def apply_isotonic_monotonicity(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Enforce monotonicity on quantile predictions using isotonic regression per row.
-        
+
         Args:
             df: DataFrame with quantile predictions as columns (e.g., q_0.05, q_0.1, ..., q_0.975)
-            
+
         Returns:
             A new DataFrame with monotonic quantile predictions per row.
         """
@@ -649,6 +675,66 @@ class ProbabilisticForecastingModel:
             df_sorted.loc[idx, quantile_columns] = mono_vals
 
         return df_sorted
+
+    def _prob_exceed_vectorised(self, Q: np.ndarray, p: np.ndarray, y_threshold: float, debug: bool = False) -> np.ndarray:
+        """
+        Vectorised piece-wise linear CDF inversion to compute P(Y > y_threshold)
+        from a set of predicted quantiles.
+
+        Parameters
+        ----------
+        Q : ndarray, shape (n_obs, n_q)
+            Quantile predictions per row, ASCENDING in τ.
+        p : ndarray, shape (n_q,)
+            Quantile levels (0 < τ < 1), ASCENDING (e.g., 0.05, 0.2, ...).
+        y_threshold : float
+            The exceedance threshold (e.g. 280).
+        debug : bool
+            If True, prints small samples of intermediate arrays.
+
+        Returns
+        -------
+        ndarray, shape (n_obs,)
+            P(Y > y_threshold) for each observation.
+        """
+        Q = Q.astype(float, copy=False)
+        n_obs, n_q = Q.shape
+
+        # Locate segment k s.t. Q_k <= y < Q_{k+1}; clip to valid range
+        idx = (Q < y_threshold).sum(axis=1) - 1
+        idx = np.clip(idx, 0, n_q - 2)
+
+        row = np.arange(n_obs)
+        Q_lo = Q[row, idx]
+        Q_hi = Q[row, idx + 1]
+        p_lo = p[idx]
+        p_hi = p[idx + 1]
+
+        # Linear interpolation of CDF at y_threshold
+        with np.errstate(divide="ignore", invalid="ignore"):
+            Fy = p_lo + (y_threshold - Q_lo) / (Q_hi - Q_lo) * (p_hi - p_lo)
+
+        # Strict bounds: let equality be handled by interpolation
+        below_min = y_threshold < Q[:, 0]
+        above_max = y_threshold > Q[:, -1]
+        Fy[below_min] = 0.0
+        Fy[above_max] = 1.0
+
+        # Degenerate segments (Q_hi == Q_lo) or NaNs from division → fall back to upper τ
+        degenerate = (Q_hi == Q_lo) | np.isnan(Fy)
+        Fy = np.where(degenerate, p_hi, Fy)
+
+        if debug:
+            print("idx sample:", idx[:5])
+            print("Q_lo sample:", Q_lo[:5])
+            print("Q_hi sample:", Q_hi[:5])
+            print("p_lo sample:", p_lo[:5])
+            print("p_hi sample:", p_hi[:5])
+            print("Fy sample:", Fy[:5])
+            print("P(Y>y) sample:", (1.0 - Fy)[:5])
+
+        # P(Y > y) = 1 - F(y)
+        return 1.0 - Fy
 
 
     def save(self, output_path: Path) -> None:

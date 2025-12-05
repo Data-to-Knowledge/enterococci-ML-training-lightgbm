@@ -165,7 +165,9 @@ def run_pipeline(config_path: str, mode: str):
                     try:
                         from src.evaluation.evaluator import Evaluator
                         evaluator = Evaluator(config["evaluation"])
-                        metrics = evaluator._calculate_metrics(y_true, predictions["q_median"] if isinstance(predictions, pd.DataFrame) else predictions)
+                        # For probabilistic model, use "predictions" column; for others use the predictions directly
+                        pred_col = predictions["predictions"] if isinstance(predictions, pd.DataFrame) and "predictions" in predictions.columns else predictions
+                        metrics = evaluator._calculate_metrics(y_true, pred_col)
                         for metric, value in metrics.items():
                             logger.info(f"{model_name} {metric}: {value:.4f}")
                     except Exception as eval_error:
@@ -245,4 +247,4 @@ if __name__ == "__main__":
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")
-    app.run(debug=False, port=8520)
+    app.run(debug=False, port=8580)
