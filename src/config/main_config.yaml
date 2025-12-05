@@ -42,20 +42,21 @@ models:
     
     lgb_params:
       # Tuned for rare event detection (sites with few exceedances)
-      n_estimators: 300                # More trees for better learning (was 250)
-      learning_rate: 0.03              # Lower LR for smoother convergence (was 0.04)
-      num_leaves: 31                   # Keep same
-      min_data_in_leaf: 5              # CRITICAL: Allow learning from rare events (was 10)
+      n_estimators: 350                # Even more trees (was 300)
+      learning_rate: 0.025             # Even lower LR for finer adjustments (was 0.03)
+      num_leaves: 40                   # Increase model capacity (was 31)
+      min_data_in_leaf: 3              # VERY aggressive for rare events (was 5)
       colsample_bytree: 0.7            # Feature sampling
       subsample: 0.8                   # Row sampling for robustness
       subsample_freq: 1                # Apply row sampling every iteration
-      reg_alpha: 0.1                   # L1 regularization for feature selection (was 0.05)
-      reg_lambda: 0.8                  # L2 regularization (reduced from 1.0)
-      min_child_weight: 0.001          # CRITICAL: Allow splits on rare events (was 0.01)
-      scale_pos_weight: 2.0            # Boost minority class (exceedances)
+      reg_alpha: 0.15                  # Stronger L1 feature selection (was 0.1)
+      reg_lambda: 0.5                  # Further reduce L2 penalty (was 0.8)
+      min_child_weight: 0.0001         # ULTRA aggressive for rare events (was 0.001)
+      scale_pos_weight: 3.0            # Stronger boost for exceedances (was 2.0)
       boosting_type: 'gbdt'
       max_bin: 255
-      max_depth: 6                     # Allow more complex interactions (was 5)
+      max_depth: 7                     # Even deeper trees (was 6)
+      min_split_gain: 0.0              # Allow any split that improves (was default 0)
 
     meta_learner_tune: False
     meta_learner_params:
