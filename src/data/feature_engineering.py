@@ -68,9 +68,9 @@ class FeatureEngineer:
 
 
     def temporal_features(self, df):
-        # Convert DateTime column to datetime with the specified format
-        df['DateTime'] = pd.to_datetime(df['DateTime'], format='%m/%d/%y %H:%M')
-        
+        # Convert DateTime column to datetime (auto-detect format, day-first)
+        df['DateTime'] = pd.to_datetime(df['DateTime'], dayfirst=True)
+
         # Extracting month and week features
         df['YEAR'] = df['DateTime'].dt.year
         df['MONTH'] = df['DateTime'].dt.month
@@ -78,6 +78,12 @@ class FeatureEngineer:
         df['DAY_OF_WEEK'] = df['DateTime'].dt.dayofweek  # Monday=0, Sunday=6
         df['WEEKEND'] = df['DateTime'].dt.dayofweek.isin([5, 6]).astype(int)
         df['TIME_OF_DAY'] = df['DateTime'].dt.hour  # Extracting time of day
+
+        # Create Season column (swimming season year format: "2013-2014")
+        # Swimming season runs from October to September (e.g., Oct 2013 - Sep 2014 = "2013-2014")
+        df['Season'] = df['YEAR'].astype(str) + '-' + (df['YEAR'] + 1).astype(str)
+        # Adjust for months before October (Jan-Sep belong to previous season year)
+        df.loc[df['MONTH'] < 10, 'Season'] = (df['YEAR'] - 1).astype(str) + '-' + df['YEAR'].astype(str)
 
         # Define New Zealand public holidays as a dictionary with date ranges
         HOLIDAY_DATE_DATA = {
