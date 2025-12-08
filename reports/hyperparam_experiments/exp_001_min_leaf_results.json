@@ -1,0 +1,55 @@
+{
+  "experiment_name": "exp_001_min_leaf",
+  "experiment_description": "Test min_data_in_leaf=10 to reduce FPs by requiring more samples per leaf",
+  "hyperparameters": {
+    "n_estimators": 300,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_data_in_leaf": 10,
+    "colsample_bytree": 0.7,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.8,
+    "min_child_weight": 0.001,
+    "scale_pos_weight": 2.0,
+    "boosting_type": "gbdt",
+    "max_bin": 255,
+    "max_depth": 6
+  },
+  "timestamp": "2025-12-06T10:36:40.156259",
+  "metrics": {
+    "overall": {
+      "sensitivity": 0.722972972972973,
+      "specificity": 0.8680377035132819,
+      "TP": 107,
+      "FP": 154,
+      "TN": 1013,
+      "FN": 41,
+      "rmse": 732.3975737832903,
+      "rmse_safe": 378.40320710391654,
+      "rmse_exceedance": 1907.0860271274773
+    },
+    "fold_1": {
+      "sensitivity": 0.6764705882352942,
+      "specificity": 0.9230769230769231,
+      "TP": 23,
+      "FP": 23,
+      "FN": 11
+    },
+    "fold_2": {
+      "sensitivity": 0.86,
+      "specificity": 0.7976744186046512,
+      "TP": 43,
+      "FP": 87,
+      "FN": 7
+    },
+    "fold_3": {
+      "sensitivity": 0.640625,
+      "specificity": 0.8995433789954338,
+      "TP": 41,
+      "FP": 44,
+      "FN": 23
+    }
+  }
+}

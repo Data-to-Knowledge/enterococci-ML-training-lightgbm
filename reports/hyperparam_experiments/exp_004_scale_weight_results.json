@@ -1,0 +1,55 @@
+{
+  "experiment_name": "exp_004_scale_weight",
+  "experiment_description": "Test scale_pos_weight=1.5 to reduce overconfident exceedance predictions",
+  "hyperparameters": {
+    "n_estimators": 300,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_data_in_leaf": 5,
+    "colsample_bytree": 0.7,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.8,
+    "min_child_weight": 0.001,
+    "scale_pos_weight": 1.5,
+    "boosting_type": "gbdt",
+    "max_bin": 255,
+    "max_depth": 6
+  },
+  "timestamp": "2025-12-06T10:37:53.662596",
+  "metrics": {
+    "overall": {
+      "sensitivity": 0.7297297297297297,
+      "specificity": 0.884318766066838,
+      "TP": 108,
+      "FP": 135,
+      "TN": 1032,
+      "FN": 40,
+      "rmse": 685.9273426476269,
+      "rmse_safe": 309.18371534928775,
+      "rmse_exceedance": 1851.1205463251245
+    },
+    "fold_1": {
+      "sensitivity": 0.7352941176470589,
+      "specificity": 0.939799331103679,
+      "TP": 25,
+      "FP": 18,
+      "FN": 9
+    },
+    "fold_2": {
+      "sensitivity": 0.8,
+      "specificity": 0.8186046511627907,
+      "TP": 40,
+      "FP": 78,
+      "FN": 10
+    },
+    "fold_3": {
+      "sensitivity": 0.671875,
+      "specificity": 0.910958904109589,
+      "TP": 43,
+      "FP": 39,
+      "FN": 21
+    }
+  }
+}

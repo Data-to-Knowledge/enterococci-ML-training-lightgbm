@@ -1,0 +1,55 @@
+{
+  "experiment_name": "exp_008_min_leaf_15",
+  "experiment_description": "Test min_data_in_leaf=15 for stronger regularization",
+  "hyperparameters": {
+    "n_estimators": 300,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_data_in_leaf": 15,
+    "colsample_bytree": 0.7,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.8,
+    "min_child_weight": 0.001,
+    "scale_pos_weight": 2.0,
+    "boosting_type": "gbdt",
+    "max_bin": 255,
+    "max_depth": 6
+  },
+  "timestamp": "2025-12-06T10:39:29.510360",
+  "metrics": {
+    "overall": {
+      "sensitivity": 0.6891891891891891,
+      "specificity": 0.8911739502999143,
+      "TP": 102,
+      "FP": 127,
+      "TN": 1040,
+      "FN": 46,
+      "rmse": 771.9543023177733,
+      "rmse_safe": 413.3885076644802,
+      "rmse_exceedance": 1986.776354747505
+    },
+    "fold_1": {
+      "sensitivity": 0.6764705882352942,
+      "specificity": 0.9297658862876255,
+      "TP": 23,
+      "FP": 21,
+      "FN": 11
+    },
+    "fold_2": {
+      "sensitivity": 0.8,
+      "specificity": 0.8348837209302326,
+      "TP": 40,
+      "FP": 71,
+      "FN": 10
+    },
+    "fold_3": {
+      "sensitivity": 0.609375,
+      "specificity": 0.9200913242009132,
+      "TP": 39,
+      "FP": 35,
+      "FN": 25
+    }
+  }
+}

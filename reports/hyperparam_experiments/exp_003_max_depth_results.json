@@ -1,0 +1,55 @@
+{
+  "experiment_name": "exp_003_max_depth",
+  "experiment_description": "Test max_depth=5 to limit model complexity and reduce overfitting",
+  "hyperparameters": {
+    "n_estimators": 300,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_data_in_leaf": 5,
+    "colsample_bytree": 0.7,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.8,
+    "min_child_weight": 0.001,
+    "scale_pos_weight": 2.0,
+    "boosting_type": "gbdt",
+    "max_bin": 255,
+    "max_depth": 5
+  },
+  "timestamp": "2025-12-06T10:37:28.121498",
+  "metrics": {
+    "overall": {
+      "sensitivity": 0.722972972972973,
+      "specificity": 0.8911739502999143,
+      "TP": 107,
+      "FP": 127,
+      "TN": 1040,
+      "FN": 41,
+      "rmse": 692.863911601694,
+      "rmse_safe": 315.5098579078283,
+      "rmse_exceedance": 1865.6002131768225
+    },
+    "fold_1": {
+      "sensitivity": 0.7352941176470589,
+      "specificity": 0.9565217391304348,
+      "TP": 25,
+      "FP": 13,
+      "FN": 9
+    },
+    "fold_2": {
+      "sensitivity": 0.8,
+      "specificity": 0.8302325581395349,
+      "TP": 40,
+      "FP": 73,
+      "FN": 10
+    },
+    "fold_3": {
+      "sensitivity": 0.65625,
+      "specificity": 0.906392694063927,
+      "TP": 42,
+      "FP": 41,
+      "FN": 22
+    }
+  }
+}

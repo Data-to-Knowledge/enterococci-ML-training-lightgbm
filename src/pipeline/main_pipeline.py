@@ -237,8 +237,9 @@ def run_pipeline(config_path: str, mode: str):
             app = generate_dashboard(test_forecast)
 
             logger.info(f"Interactive visualization saved to {html_path}")
+            return app
 
-    return app
+    return None
 
 
 if __name__ == "__main__":
