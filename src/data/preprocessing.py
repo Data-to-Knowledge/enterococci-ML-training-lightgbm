@@ -28,12 +28,13 @@ class Preprocessor:
 
     def clean_data(self, data: pd.DataFrame) -> pd.DataFrame:
 
-        DATA_SUBSET = ['DateTime', 'SITE_NAME', 'Harbour', 'Enterococci', '3H', '6H', '12H', '24H', '48H', '72H', 'Season', 'tidal_state', 'Shallowness', 
-                    'Soil_type', 'Catchment_slope', 'Landcover_catchment', 'watercraft_use', 'sewage_discharge_beach', 'high_intensity_agri_beach', 'rain_intensity_48h', 
-                    'rain_duration_48h', 'wind_speed_12h', 'wind_speed_6h', 'wind_speed_3h', 'hours_to_high_tide', 'high_tide_height', 
-                    'wind_direction_3h', 'wind_direction_6h', 'wind_direction_12h', 'beach_orientation_angle', 'Latitude', 'Longitude'] 
-        
-        data = data[DATA_SUBSET]
+        DATA_SUBSET = ['DateTime', 'SITE_NAME', 'Harbour', 'Enterococci', '3H', '6H', '12H', '24H', '48H', '72H', 'tidal_state', 'Shallowness',
+                    'Soil_type', 'Catchment_slope', 'Landcover_catchment', 'watercraft_use', 'sewage_discharge_beach', 'high_intensity_agri_beach', 'rain_intensity_48h',
+                    'rain_duration_48h', 'wind_speed_12h', 'wind_speed_6h', 'wind_speed_3h', 'hours_to_high_tide', 'high_tide_height',
+                    'wind_direction_3h', 'wind_direction_6h', 'wind_direction_12h', 'beach_orientation_angle', 'Latitude', 'Longitude']
+
+        # Only filter columns that exist in the data (Season is created in feature engineering)
+        data = data[[c for c in DATA_SUBSET if c in data.columns]]
 
         # Parse DateTime with flexible format detection (day-first for NZ data)
         data['DateTime'] = pd.to_datetime(data['DateTime'], format='mixed', dayfirst=True, errors='coerce')
