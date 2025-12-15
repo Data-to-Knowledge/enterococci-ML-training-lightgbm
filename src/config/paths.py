@@ -17,4 +17,5 @@ CONFIG_DIR = PROJECT_ROOT / "src" / "config"
 # ENTEROCOCCI_DATA_PATH = RAW_DATA_DIR / "enterococci_data.csv"
 # SITE_METADATA_PATH = RAW_DATA_DIR / "site_metadata.csv"
 MAIN_CONFIG_PATH = CONFIG_DIR / "main_config.yaml"
-TRAINING_DATA_PATH = PROCESSED_DATA_DIR / "cleaned_training_data_2013_2025_15sites.csv"
+# Extended dataset: Akaroa sites from 2008, Lyttelton sites from 2013
+TRAINING_DATA_PATH = PROCESSED_DATA_DIR / "cleaned_training_data_Dec2008_Sept2025.csv"
