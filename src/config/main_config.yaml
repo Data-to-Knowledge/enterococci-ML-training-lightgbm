@@ -60,10 +60,10 @@ models:
     lgb_params:
       n_estimators: 180
       learning_rate: 0.08721057029770096
-      num_leaves: 40
-      min_data_in_leaf: 5
+      num_leaves: 31
+      min_data_in_leaf: 8
       colsample_bytree: 0.9587602766121369
-      reg_lambda: 0.6540961177848345
+      reg_lambda: 0.75
       boosting_type: 'gbdt'
       max_bin: 211
 
