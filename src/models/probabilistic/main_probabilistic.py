@@ -8,7 +8,7 @@
 # import lightgbm as lgb
 # from sklearn.model_selection import GridSearchCV
 # import os
-# from mapie.quantile_regression import MapieQuantileRegressor
+# from mapie.quantile_regression import MapieQuantileRegressor  # old API
 
 # project_root = Path(__file__).resolve().parent.parent.parent.parent
 # sys.path.append(str(project_root))
@@ -322,9 +322,9 @@ import sys
 import lightgbm as lgb
 from sklearn.model_selection import GridSearchCV
 import os
-from mapie.quantile_regression import MapieQuantileRegressor
+from mapie.regression import ConformalizedQuantileRegressor
 from lightgbm import LGBMRegressor
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, train_test_split
 from sklearn.isotonic import IsotonicRegression
 
 
@@ -582,20 +582,24 @@ class ProbabilisticForecastingModel:
         X_train = self.training_data.drop('Enterococci', axis=1)
         y_train = self.training_data['Enterococci']
         
-        # Create prediction intervals with symmetric alpha
-        mapie = MapieQuantileRegressor(
-            estimator=base_model,
-            method="quantile",
-            cv='split'
+        # Split training data for conformalization
+        X_fit, X_conf, y_fit, y_conf = train_test_split(
+            X_train, y_train, test_size=0.3, random_state=42
         )
-        
-        # Fit once
-        mapie.fit(X_train, y_train)
 
-        # Get predictions with proper confidence level
-        # alpha=0.1 for 90% prediction interval (0.05 on each side)
-        point_pred_test, intervals_test = mapie.predict(X_test, alpha=0.10)
-        point_pred_train, intervals_train = mapie.predict(X_train, alpha=0.10)
+        # Create prediction intervals with 90% confidence
+        mapie = ConformalizedQuantileRegressor(
+            estimator=base_model,
+            confidence_level=0.90
+        )
+
+        # Fit, conformalize, then predict intervals
+        mapie.fit(X_fit, y_fit)
+        mapie.conformalize(X_conf, y_conf)
+
+        # Get predictions with prediction intervals
+        point_pred_test, intervals_test = mapie.predict_interval(X_test)
+        point_pred_train, intervals_train = mapie.predict_interval(X_train)
         
         # Extract bounds
         lower_pred_test = intervals_test[:, 0, 0]  # Lower bound
