@@ -3,8 +3,6 @@ from typing import Dict, List, Optional, Tuple, Union, Any
 import numpy as np
 import pandas as pd
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, Any
 from termcolor import colored
 from sklearn.metrics import (
     mean_squared_error,
@@ -181,92 +179,6 @@ class Evaluator:
         """
         return 100.0 * np.sum(np.abs(y_true - y_pred)) / np.sum(np.abs(y_true))
     
-    def _calculate_sensitivity(self, y_true: pd.Series, y_pred: np.ndarray, 
-                            threshold: float) -> float:
-        """Calculate sensitivity (true positive rate).
-        
-        Args:
-            y_true: True target values
-            y_pred: Predicted target values
-            threshold: Exceedance threshold
-            
-        Returns:
-            Sensitivity value (0-1)
-        """
-        # True exceedances
-        true_exceedances = y_true >= threshold
-        
-        # Predicted exceedances
-        predicted_exceedances = y_pred >= threshold
-        
-        # True positives
-        true_positives = np.logical_and(true_exceedances, predicted_exceedances)
-        
-        # Calculate sensitivity
-        if np.sum(true_exceedances) > 0:
-            return np.sum(true_positives) / np.sum(true_exceedances)
-        else:
-            return 1.0  # No exceedances to detect
-    
-    def _calculate_specificity(self, y_true: pd.Series, y_pred: np.ndarray, 
-                            threshold: float) -> float:
-        """Calculate specificity (true negative rate).
-        
-        Args:
-            y_true: True target values
-            y_pred: Predicted target values
-            threshold: Exceedance threshold
-            
-        Returns:
-            Specificity value (0-1)
-        """
-        # True safe conditions
-        true_safe = y_true < threshold
-        
-        # Predicted safe conditions
-        predicted_safe = y_pred < threshold
-        
-        # True negatives
-        true_negatives = np.logical_and(true_safe, predicted_safe)
-        
-        # Calculate specificity
-        if np.sum(true_safe) > 0:
-            return np.sum(true_negatives) / np.sum(true_safe)
-        else:
-            return 1.0  # No safe conditions to identify
-    
-    def _calculate_precautionary_sensitivity(self, y_true: pd.Series, y_pred: np.ndarray,
-                                          exceedance_threshold: float,
-                                          precautionary_threshold: float) -> float:
-        """Calculate precautionary sensitivity.
-        
-        This counts a prediction as a true positive if it exceeds the precautionary threshold
-        even if the actual exceedance threshold is higher.
-        
-        Args:
-            y_true: True target values
-            y_pred: Predicted target values
-            exceedance_threshold: Actual exceedance threshold
-            precautionary_threshold: Lower precautionary threshold
-            
-        Returns:
-            Precautionary sensitivity value (0-1)
-        """
-        # True exceedances
-        true_exceedances = y_true >= exceedance_threshold
-        
-        # Precautionary predictions
-        precautionary_predictions = y_pred >= precautionary_threshold
-        
-        # True positives (with precautionary consideration)
-        true_positives = np.logical_and(true_exceedances, precautionary_predictions)
-        
-        # Calculate precautionary sensitivity
-        if np.sum(true_exceedances) > 0:
-            return np.sum(true_positives) / np.sum(true_exceedances)
-        else:
-            return 1.0  # No exceedances to detect
-    
     def generate_report(self, output_path: Optional[Path] = None) -> Dict[str, Any]:
         """Generate an evaluation report with all results.
         
@@ -347,12 +259,6 @@ class Evaluator:
         y_train = train_forecast["Enterococci"]
         y_test = test_forecast["Enterococci"]
 
-        # print(y_train)
-        # print(y_test)
-        # print(y_pred_train)
-        # print(y_pred_test)
-        # print(model)
-
         # MODEL PERFORMANCE METRICS
         metrics_keys = [
             "rmse", "mae", "mape", "nrmse", "r2",
@@ -421,11 +327,6 @@ class Evaluator:
 
         y_pred[y_pred <= 0] = 5    # Replace negative values with 0
         
-        # # Replace NaN values with 10
-        # y_true = np.where(np.isnan(y_true), 10, y_true)
-        # y_pred = np.where(np.isnan(y_pred), 10, y_pred)
-
-        # rmse = np.sqrt(mean_squared_error(y_true, y_pred))
         rmse = np.sqrt(mean_squared_error(np.log1p(y_true), np.log1p(y_pred)))
         mae = mean_absolute_error(y_true, y_pred)
         # mape = log_mape(y_true, y_pred)
@@ -468,8 +369,6 @@ class Evaluator:
             else:
                 final_predictions_exceedance_norm = final_predictions_exceedance / (np.max(final_predictions_exceedance) - np.min(final_predictions_exceedance))
 
-            # mape_exceedance = mean_absolute_percentage_error(y_exceedance_norm, final_predictions_exceedance_norm)
-            # mape_exceedance = log_mape(y_exceedance, final_predictions_exceedance)
             mape_exceedance = weighted_mape(np.log1p(y_exceedance), np.log1p(final_predictions_exceedance))
 
             range_y_exceedance = np.max(y_exceedance) - np.min(y_exceedance)
@@ -497,8 +396,6 @@ class Evaluator:
             else:
                 final_predictions_safe_norm = final_predictions_safe / (np.max(final_predictions_safe) - np.min(final_predictions_safe))
 
-            # mape_safe = mean_absolute_percentage_error(y_safe_norm, final_predictions_safe_norm)
-            # mape_safe = log_mape(y_safe, final_predictions_safe)
             mape_safe = weighted_mape(np.log1p(y_safe), np.log1p(final_predictions_safe))
 
             range_y_safe = np.max(y_safe) - np.min(y_safe)
@@ -557,19 +454,9 @@ class Evaluator:
 
         # New metric: number of cases where true value is exceedance and predicted concentration is in warning range
         precautionary_cases = sum((y_true == "EXCEEDANCE") & (y_pred_regression >= 140) & (y_pred_regression < 280))
-        # New metric: recall of precautionary predictions
-        # true_positives_exceedance = sum((y_true == "EXCEEDANCE") & (y_pred_regression <= 280))
-        # true_positives_exceedance2 = sum((y_true == "EXCEEDANCE") & (y_pred == "EXCEEDANCE"))
         all_actual_exceedances = sum(y_true == "EXCEEDANCE")
         recall_precautionary = (precautionary_cases + tp) / all_actual_exceedances if all_actual_exceedances > 0 else 0
         
-        # TODO: PRECAUTIONARY RECALL IS NOT WORKING
-        # print(precautionary_cases)
-        # print(true_positives_exceedance)
-        # print(all_actual_exceedances)
-        # print(true_positives_exceedance2)
-        # print(tp)
-
         metrics["accuracy"].append(accuracy)
         metrics["recall_safe"].append(recall_safe)
         metrics["recall_exceedance"].append(recall_exceedance)
@@ -678,8 +565,6 @@ class Evaluator:
         print(colored("---------------------------------", 'cyan'))
         print(colored(f"FORECAST PERFORMANCE (MODEL: {models})", 'red'))
         print(colored("---------------------------------", 'cyan'))
-        # print(f"{colored('PERFORMANCE EVALUATED ON HOLDOUT PERIOD:', 'light_cyan')} {colored(PIPELINE_CONFIG.EVALUATE_TIMESERIES_HOLDOUT_START, 'light_red')}  {colored('-->', 'light_red')}  {colored(PIPELINE_CONFIG.EVALUATE_TIMESERIES_HOLDOUT_END, 'light_red')}")
-
         print(colored("-----", 'cyan'))
         print(colored(f"TRAINING PERFORMANCE (2013-10-01 00:00:00 - 2023-10)", 'light_cyan'))
         print('\n')

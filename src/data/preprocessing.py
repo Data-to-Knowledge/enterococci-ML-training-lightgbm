@@ -10,12 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 project_root = Path(__file__).resolve().parent.parent.parent  
 sys.path.append(str(project_root))
 
-from src.config.paths import (
-    # ENTEROCOCCI_DATA_PATH,
-    # METEOROLOGICAL_DATA_PATH,
-    # SITE_METADATA_PATH,
-    TRAINING_DATA_PATH
-)
+from src.config.paths import TRAINING_DATA_PATH
 
 from src.utils.logging import setup_logger
 
@@ -171,12 +166,3 @@ class Preprocessor:
         """
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
-        
-
-
-# data = Preprocessor()
-
-# df = data.clean_data(TRAINING_DATA_PATH)
-
-# print(df.head())
-# print(df.info())

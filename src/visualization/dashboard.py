@@ -5,10 +5,8 @@ import sys
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from functools import reduce
 import dash
-import os
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output
 from sklearn.metrics import (
@@ -75,12 +73,6 @@ def generate_dashboard(forecast):
     
     # Define layout with banner image
     app.layout = html.Div([
-        # Banner Image
-        html.Img(
-            src= r'C:\Users\AsifCheena\OneDrive - BSL\Desktop\IMPORTANT REPOS\Dont-Swim-in-Data\assets\beach.png',  # Path to the banner image
-            style={'width': '100%', 'height': 'auto', 'margin-bottom': '20px'}
-        ),
-        
         # Dashboard Title
         html.H1(
             "FORECAST PERFORMANCE DASHBOARD",

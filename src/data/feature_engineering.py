@@ -9,12 +9,7 @@ import sys
 project_root = Path(__file__).resolve().parent.parent.parent  
 sys.path.append(str(project_root))
 
-from src.config.paths import (
-    # ENTEROCOCCI_DATA_PATH,
-    # METEOROLOGICAL_DATA_PATH,
-    # SITE_METADATA_PATH,
-    TRAINING_DATA_PATH
-)
+from src.config.paths import TRAINING_DATA_PATH
 
 from src.utils.logging import setup_logger
 
@@ -135,55 +130,6 @@ class FeatureEngineer:
 
         return X
     
-    # def lagged_enterococci_features(self, data):
-    #     """
-    #     Adds Site_Season_Average (rolling mean of last 5, shifted) and 
-    #     Site_Historical_Exceedance_Rate (manual proportion of previous exceedances per site-season, shifted)
-    #     to the provided DataFrame. Matches inference logic.
-
-    #     Parameters:
-    #     data (pd.DataFrame): Must contain columns ['SITE_NAME', 'DateTime', 'Season', 'Enterococci']
-
-    #     Returns:
-    #     pd.DataFrame: Updated with lagged features.
-    #     """
-
-    #     data = data.copy()
-    #     data["DateTime"] = pd.to_datetime(data["DateTime"])
-    #     data["Season"] = data["Season"].astype("category")
-    #     data["SITE_NAME"] = data["SITE_NAME"].astype("category")
-    #     data = data.sort_values(by=["SITE_NAME", "Season", "DateTime"])
-
-    #     # Prepare new columns
-    #     data["Site_Season_Average"] = np.nan
-    #     data["Site_Historical_Exceedance_Rate"] = np.nan
-
-    #     # Manual rolling/expanding for each group (site, season)
-    #     for (site, season), group in data.groupby(["SITE_NAME", "Season"]):
-    #         idxs = group.index
-    #         for i, idx in enumerate(idxs):
-    #             prior = group.loc[idxs[:i], 'Enterococci']
-    #             if len(prior) > 0:
-    #                 # Rolling mean of previous 5 samples (shifted)
-    #                 data.at[idx, "Site_Season_Average"] = prior[-5:].mean()
-    #                 # Manual exceedance rate
-    #                 n_prev = len(prior)
-    #                 n_exceed = (prior > 280).sum()
-    #                 data.at[idx, "Site_Historical_Exceedance_Rate"] = n_exceed / n_prev
-    #             # else: remain NaN
-
-    #     # Restore original order if needed
-    #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
-
-    #     # (Optional) Remove columns if not needed
-    #     if "YEAR" in data.columns:
-    #         data.drop(columns=["YEAR"], inplace=True)
-    #     if "Season" in data.columns:
-    #         data.drop(columns=["Season"], inplace=True)
-
-    #     return data
-
-
     def lagged_enterococci_features(self, data):
         """
         Adds Site Season Average (rolling mean of Enterococci) and
@@ -227,42 +173,3 @@ class FeatureEngineer:
         data.drop(columns=["Season", "YEAR"], inplace=True)
 
         return data
-    
-    # def lagged_enterococci_features(self, data):
-    #     """
-    #     Adds only Site Historical Exceedance Rate (proportion of exceedances per site-season)
-    #     to the dataframe. No Site Season Average.
-
-    #     Parameters
-    #     ----------
-    #     data : pd.DataFrame
-    #         Input data with columns ['SITE_NAME', 'Season', 'DateTime', 'Enterococci']
-
-    #     Returns
-    #     -------
-    #     pd.DataFrame
-    #         Updated data with only the Site_Historical_Exceedance_Rate feature
-    #     """
-    #     import pandas as pd
-
-    #     # Ensure correct data types
-    #     data["DateTime"] = pd.to_datetime(data["DateTime"])
-    #     data["Season"] = data["Season"].astype("category")
-    #     data["SITE_NAME"] = data["SITE_NAME"].astype("category")
-
-    #     data = data.sort_values(by=["SITE_NAME", "DateTime"])
-
-    #     # Only: Site Historical Exceedance Rate (rolling rate using only past values)
-    #     def exceedance_rate_calc(x):
-    #         past_values = x.shift(1)
-    #         return (past_values >= 280).rolling(window=len(past_values), min_periods=1).mean()
-
-    #     data["Site_Historical_Exceedance_Rate"] = (
-    #         data.groupby(["SITE_NAME", "Season"])['Enterococci']
-    #         .transform(exceedance_rate_calc)
-    #     )
-
-    #     # (Optional) Drop any unneeded columns if you want
-    #     data.drop(columns=["Season", "YEAR"], inplace=True, errors="ignore")
-
-    #     return data

@@ -5,7 +5,6 @@ from pathlib import Path
 import yaml
 import sys
 import pandas as pd
-import os
 project_root = Path(__file__).resolve().parent.parent.parent  
 sys.path.append(str(project_root))
 
@@ -16,7 +15,6 @@ from src.models.model_factory import ModelFactory
 from src.evaluation.time_series_evaluator import TimeSeriesEvaluator
 from src.evaluation.evaluator import Evaluator
 from src.utils.logging import setup_logger
-# from src.visualization.forecast_plots import create_forecast_visualizations
 from src.visualization.interactive_plots import create_interactive_forecast_plot
 from src.visualization.dashboard import generate_dashboard
 from src.config.paths import (
@@ -39,7 +37,6 @@ def run_pipeline(config_path: str, mode: str):
 
     # Load configuration
     with open(config_path, "r") as f:
-    # with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     logger.info(f"Starting pipeline in {mode} mode with config from {config_path}")
@@ -187,10 +184,6 @@ def run_pipeline(config_path: str, mode: str):
             visualization_path = Path(pred_config.get("visualization_path", "results/visualizations"))
             visualization_path.mkdir(parents=True, exist_ok=True)
             
-            # logger.info(f"Generating standard forecast visualizations in {visualization_path}")
-            # vis_files = create_forecast_visualizations(results_df, visualization_path)
-            # logger.info(f"Created {len(vis_files)} visualization files")
-        
         # Generate interactive visualizations
         if pred_config.get("generate_interactive_visualizations", True):
             interactive_path = Path(pred_config.get("interactive_visualization_path", "results/interactive"))
@@ -241,7 +234,6 @@ def run_pipeline(config_path: str, mode: str):
 
 if __name__ == "__main__":
     args = parse_args()
-    # run_pipeline(args.config, args.mode)
     app = run_pipeline(MAIN_CONFIG_PATH, "all")
     
     logger.info("Dashboard generated, starting server...")

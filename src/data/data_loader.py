@@ -9,12 +9,7 @@ import sys
 project_root = Path(__file__).resolve().parent.parent.parent  
 sys.path.append(str(project_root))
 
-from src.config.paths import (
-    # ENTEROCOCCI_DATA_PATH,
-    # METEOROLOGICAL_DATA_PATH,
-    # SITE_METADATA_PATH,
-    TRAINING_DATA_PATH
-)
+from src.config.paths import TRAINING_DATA_PATH
 
 from src.utils.logging import setup_logger
 
@@ -50,7 +45,3 @@ class DataLoader:
         """
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
-        
-        # with open(config_path, "r", encoding="utf-8") as f:
-        #     return yaml.safe_load(f)
-        
