@@ -129,3 +129,4 @@ The config is loaded by `src/config/config_loader.py` and path constants are def
 - [model-architecture.md](model-architecture.md) — Detailed model design
 - [evaluation-and-metrics.md](evaluation-and-metrics.md) — How models are evaluated
 - [visualisation.md](visualisation.md) — Dashboards and plots
+- [backlog.md](backlog.md) — Planned improvements and experiments, prioritised
