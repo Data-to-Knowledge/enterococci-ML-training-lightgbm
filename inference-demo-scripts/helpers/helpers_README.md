@@ -23,7 +23,7 @@ helpers/
 │   ├── MetService API integration (Lyttelton weather)
 │   ├── NIWA Mintaka API integration (Akaroa weather)
 │   ├── Rolling feature computation (rainfall, wind)
-│   ├── Tide data fetch (Azure SQL + LINZ fallback)
+│   ├── Tide data fetch (LINZ static charts)
 │   ├── Tide feature calculation
 │   └── Wind vector transformations
 │
@@ -80,8 +80,7 @@ helpers/
 | `add_rainfall_variables()` | 712-823 | Compute rolling rainfall sums (3/6/12/24/48/72H) | Phase 2 |
 | `add_wind_variables()` | 856-934 | Compute rolling wind features (direction, speed, Ve/Vn) | Phase 2 |
 | `add_tide_variables()` | 967-1089 | Calculate tide state + hours to high tide + height | Phase 2 |
-| `get_tide_data()` | 1123-1267 | Fetch LINZ static chart tide predictions (fallback) | Phase 2 |
-| `get_tide_data_db()` | 1289-1398 | Fetch tide predictions from Azure SQL (primary) | Phase 2 |
+| `get_tide_data()` | 1123-1267 | Fetch LINZ static chart tide predictions | Phase 2 |
 
 **Internal Functions:**
 
@@ -100,15 +99,14 @@ helpers/
 
 ### tides_ecan.py (LEGACY)
 
-**Status:** Deprecated, not used in production
+**Status:** Deprecated, not used in the demo
 
 **Original Purpose:** Fetch tide predictions from ECAN DataWarehouse
 
-**Replacement:** `get_tide_data_db()` in WeatherAPI_Functions.py (uses Azure SQL instead)
+**Replacement:** `get_tide_data()` in WeatherAPI_Functions.py (uses LINZ static charts)
 
 **Why Deprecated:**
 - ECAN DataWarehouse API less reliable than LINZ data
-- Azure SQL caching provides better performance
 - Kept for historical reference only
 
 ---
@@ -127,7 +125,6 @@ for i in range(3):
     df = f.get_hourly_weather_data_Lyttelton(
         datetime=date,
         station_candidates=("93786", "93951"),
-        log_event_fn=ev_met,
         logger=logger
     )
     lyttelton_parts.append(df)
@@ -157,7 +154,7 @@ hist_df = fetch_enterococci_data_for_sites(
     site_codes=["SQ32610", "SQ30640", ...],  # 15 SQ-codes
     from_date="2025-10-01",
     to_date="2025-11-28",
-    event_fn=ev_hill
+    logger=logger
 )
 
 # 2. Compute seasonal features
@@ -228,8 +225,8 @@ shap_df, base_value = compute_shap_df(rf_model, shap_input)
 └─────────────────────────────────────────────────────────────────┘
                              ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ PHASE 2: DATA ACQUISITION                                       │
-│ get_tide_data_db() → Tidal predictions (Azure SQL)             │
+│ PHASE 2: DATA ACQUISITION (all fetched concurrently)            │
+│ get_tide_data() → Tidal predictions (LINZ)                     │
 │ get_hourly_weather_data_Lyttelton() → MetService 24h           │
 │   → add_rainfall_variables() → 3H, 6H, 12H, 24H, 48H, 72H     │
 │   → add_wind_variables() → wind_speed_3h/6h/12h, Ve/Vn        │
@@ -266,10 +263,10 @@ All helper functions follow these principles:
 - **Example:** If 3/15 sites fail in Hilltop fetch, return 12 successful sites
 - **Result:** Predictions continue for available sites
 
-### 2. Explicit Event Logging
-- **Principle:** Emit structured events (JSON) for all operations
-- **Example:** `ev_met("SOURCE_VAR_EMPTY", station_id="93786", var="rainfal_01hracc")`
-- **Result:** Observability into API health, retry attempts, fallback usage
+### 2. Standard Python Logging
+- **Principle:** Use Python's `logging` module for all operations
+- **Example:** `logger.warning("MetService fetch raised on %s: %s", date, e)`
+- **Result:** Observability into API health, retry attempts, fallback usage via `inference.log`
 
 ### 3. Retry with Backoff
 - **Principle:** Transient failures retry with exponential backoff
@@ -300,7 +297,7 @@ hist_df = fetch_enterococci_data_for_sites(
     site_codes=["SQ32610"],  # Akaroa main beach
     from_date="2025-10-01",
     to_date="2025-11-28",
-    event_fn=lambda e, **kw: print(f"Event: {e}, {kw}")
+    logger=None
 )
 
 print(hist_df)
@@ -319,7 +316,6 @@ yesterday = datetime.utcnow() - timedelta(days=1)
 weather_df = f.get_hourly_weather_data_Lyttelton(
     datetime=yesterday,
     station_candidates=("93786", "93951"),
-    log_event_fn=lambda e, **kw: print(f"Event: {e}, {kw}"),
     logger=None
 )
 
@@ -337,7 +333,6 @@ from datetime import datetime
 akaroa_df = f.get_10min_weather_data_Akaroa(
     datetime.utcnow(),
     daytotal=3,
-    log_event_fn=lambda e, **kw: print(f"Event: {e}, {kw}"),
     logger=None
 )
 
@@ -363,9 +358,8 @@ print(akaroa_df)
 **WeatherAPI_Functions.py:**
 - `pandas` → DataFrame operations
 - `numpy` → Vector math (Ve, Vn), circular means
-- `requests` → HTTP calls to MetService, NIWA APIs
+- `requests` → HTTP calls to MetService, NIWA, LINZ APIs
 - `pytz` → Timezone conversions
-- `sqlalchemy` → Azure SQL connection (tide fetch)
 
 ---
 
@@ -373,13 +367,11 @@ print(akaroa_df)
 
 ### Bottlenecks
 
-| Operation | Typical Time | Optimization Opportunities |
-|-----------|--------------|---------------------------|
-| Hilltop fetch (15 sites) | 10-20s | Parallel requests (currently sequential) |
-| MetService fetch (3 days × 3 vars) | 8-15s | Concurrent variable fetches |
-| NIWA fetch (3 products) | 5-10s | Cached responses (daily refresh) |
-| SHAP computation (15 sites × 12 quantiles) | 5-15s | Batch processing, GPU acceleration |
-| Rolling feature computation | 1-2s | Vectorised operations (already optimised) |
+| Operation | Typical Time | Notes |
+|-----------|--------------|-------|
+| All API fetches (concurrent) | 18-22s total | ThreadPoolExecutor with 6 workers -- wall time is the slowest single call |
+| SHAP computation (15 sites × 12 quantiles) | 5-15s | Median SHAP taken across all quantile models |
+| Rolling feature computation | 1-2s | Vectorised operations |
 
 ### Memory Usage
 
@@ -435,8 +427,8 @@ weather_df = add_rainfall_variables(weather_df)  # No-op on empty
 **Solution:** Check `.empty` property and emit events
 ```python
 if weather_df.empty:
-    ev_met("SOURCE_DOWN", station_id="93786", failure_kind="all_vars_failed")
-    # Health check will catch this in Phase 2
+    logger.warning("MetService returned empty DataFrame for station 93786")
+    # Health check will catch this and exclude Lyttelton harbour
 ```
 
 ### 4. Circular Mean Implementation
@@ -499,6 +491,5 @@ When replacing functionality:
 ---
 
 **Next Steps:**
-- Read detailed function guides for implementation specifics
-- Review [../docs/02-RUNTIME-GUIDE.md](../docs/02-RUNTIME-GUIDE.md) for usage in context
-- Check [../docs/03-API-INTEGRATION.md](../docs/03-API-INTEGRATION.md) for API details (when available)
+- Read the detailed function guides linked above for implementation specifics
+- Review [../inference-demo-documentation.md](../inference-demo-documentation.md) for a full walkthrough of how these helpers are used together
