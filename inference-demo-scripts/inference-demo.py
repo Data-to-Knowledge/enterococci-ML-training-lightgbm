@@ -205,12 +205,29 @@ with ThreadPoolExecutor(max_workers=6) as _pool:
         timeout_s=10,
         max_retries=2,
     )
-    # Collect results -- blocks here until every thread is done
-    _tides_raw              = _fut_tides.result()
-    _lyt_results            = [fut.result() for fut in _fut_lyt]
+    # Collect results -- blocks here until every thread is done.
+    # Each .result() re-raises any exception thrown by the worker, so we
+    # catch per-source rather than letting one failure crash everything.
+    try:
+        _tides_raw = _fut_tides.result()
+    except Exception as e:
+        logger.warning("LINZ tide fetch failed: %s -- tide features will be NaN.", e)
+        _tides_raw = None
+
+    _lyt_results            = [fut.result() for fut in _fut_lyt]  # already guarded inside _fetch_lyt_day
     lyttelton_weather_parts = [r for r in _lyt_results if r is not None]
-    df_akaroa_10min_weather = _fut_akaroa.result()
-    hist_df                 = _fut_hilltop.result()
+
+    try:
+        df_akaroa_10min_weather = _fut_akaroa.result()
+    except Exception as e:
+        logger.warning("NIWA Akaroa fetch failed: %s -- Akaroa sites will be excluded.", e)
+        df_akaroa_10min_weather = None
+
+    try:
+        hist_df = _fut_hilltop.result()
+    except Exception as e:
+        logger.warning("Hilltop fetch failed: %s -- seasonal features will use defaults.", e)
+        hist_df = pd.DataFrame(columns=["SITE_NAME", "DateTime", "Enterococci"])
 
 logger.info("All fetches complete in %.1fs.", time.perf_counter() - _t_fetch)
 

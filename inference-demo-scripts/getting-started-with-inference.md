@@ -18,8 +18,6 @@ Every time you run it you get a fresh set of predictions for the current hour. I
 
 ## How this differs from the production pipeline
 
-The production pipeline lives in a separate repository. It is not accessible here, and that is intentional -- you should not be running it.
-
 Here is what is stripped out compared to production:
 
 | Production feature | Demo replacement |
@@ -101,9 +99,7 @@ inference_outputs/        <-- prediction CSVs and log files
 inference-env.env         <-- your credentials
 ```
 
-**Set up your own venv locally.** Do not share or copy someone else's `.venv-inference/`. Virtual environments contain absolute paths and compiled extensions that are machine-specific.
-
-**Check `git status` before every commit.** If you ever see `inference-env.env` or anything inside `inference_outputs/` listed, do not proceed. Remove the file from staging with `git restore --staged <file>` and check your `.gitignore`.
+**Set up your own venv locally.**
 
 **Keep your credentials out of code.** If you are experimenting and need to test credentials, always use the `.env` file -- never hardcode them in a script, even temporarily.
 
@@ -117,7 +113,7 @@ With your venv activated and credentials in place:
 python inference-demo.py
 ```
 
-The script takes roughly 20--40 seconds to run (dominated by external API calls). While it runs you will see log output in the terminal. After it completes:
+The script takes roughly 18--22 seconds to run. All external API calls run concurrently so the wall time is the slowest single call, not the sum of all calls. While it runs you will see log output in the terminal. After it completes:
 
 - Predictions: `inference_outputs/inference_predictions.csv`
 - Full log: `inference_outputs/inference.log`

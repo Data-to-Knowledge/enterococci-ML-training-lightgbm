@@ -72,7 +72,7 @@ The script will:
 7. Write predictions to `inference_outputs/inference_predictions.csv`
 8. Append a detailed log to `inference_outputs/inference.log`
 
-A typical successful run takes 30--60 seconds, mostly spent waiting on API responses.
+A typical successful run takes 18--22 seconds. All six external API calls (MetService × 3 days, LINZ tides, NIWA Akaroa, Hilltop) are made concurrently using a thread pool, so the wall time is roughly the slowest single call rather than the sum of all calls.
 
 ---
 
@@ -155,20 +155,24 @@ The script loads `inference-env.env` via `python-dotenv`, then sets up Python pa
 
 Three timestamps are computed: NZ Standard Time (fixed UTC+12), NZ Local Time (DST-aware), and UTC. All downstream logic uses these -- weather APIs expect UTC, site metadata uses local time, and the output CSV records local time.
 
-#### 3. Tide data (LINZ)
+#### 3. Concurrent data fetching
 
-Tide predictions are fetched from LINZ static tide charts for both Akaroa and Lyttelton harbours. The tide data provides three features per site:
-- **Tidal state** -- rising, falling, high, or low
-- **Hours to high tide** -- how far away the next high tide is
-- **High tide height** -- predicted height in metres
+All six external API calls are launched at once using `concurrent.futures.ThreadPoolExecutor` with six worker threads. The calls are:
 
-These are computed by `WeatherAPI_Functions.add_tide_variables()`.
+- **MetService** -- three separate calls, one per day of history (Lyttelton hourly observations)
+- **LINZ** -- tide predictions for both harbours
+- **NIWA Mintaka** -- 10-minute weather observations for Akaroa (3 days)
+- **Hilltop** -- historical Enterococci samples for the current bathing season
 
-#### 4. Weather data
+Because every call uses the synchronous `requests` library and is purely network-bound, threads give near-linear speedup without requiring an async rewrite. Wall time drops from ~40--70 seconds (sequential) to ~18--22 seconds.
 
-**Lyttelton** -- MetService hourly observations via their JSON API. The script fetches 3 days of data and extracts rainfall (mm), wind speed, and wind direction. Wind is decomposed into eastward (Ve) and northward (Vn) vector components.
+Each fetch is individually guarded: if one source raises an exception (network timeout, HTTP error, etc.), the script logs a warning and continues with a sensible default (empty DataFrame or None) rather than crashing. MetService day fetches are wrapped in `_fetch_lyt_day()`; LINZ, NIWA, and Hilltop calls are wrapped in `try/except` around their `.result()` calls.
 
-**Akaroa** -- NIWA Mintaka 10-minute observations via their REST API (HTTP Basic Auth). The 10-minute data is aggregated to hourly: rainfall is summed, wind vectors are averaged. A "zeros-only guard" checks that the data contains genuine non-zero values in the last 12 hours -- if everything is exactly zero, it is treated as a sensor outage and the data is discarded.
+**Tide data (LINZ)** -- provides three features per site: tidal state (incoming/ebbing), hours to high tide (signed), and high tide height (metres). These are applied by `WeatherAPI_Functions.add_tide_variables()`.
+
+**Weather data** -- Lyttelton uses MetService hourly observations (rainfall, wind speed, direction). Wind is decomposed into eastward (Ve) and northward (Vn) vector components. Akaroa uses NIWA Mintaka 10-minute observations, aggregated to hourly: rainfall is summed, wind vectors are averaged. A "zeros-only guard" checks for genuine non-zero values in the last 12 hours -- all-zero data is treated as a sensor outage and discarded.
+
+**Historical Enterococci (Hilltop)** -- season-to-date samples from ECan's Hilltop server, used to compute seasonal rolling features (see step 7). Fetching this concurrently avoids blocking the weather calls.
 
 #### 5. Rolling features
 
@@ -188,7 +192,7 @@ The health policy is **per-harbour** by default -- so Lyttelton sites can still 
 
 Each of the 15 sites has static metadata: soil type, shallowness, catchment slope, land cover, GPS coordinates, beach orientation, and flags for watercraft use, sewage discharge, and high-intensity agriculture.
 
-Historical Enterococci samples are fetched from ECan's Hilltop server for the current bathing season (October to March). Two seasonal features are computed per site:
+The Hilltop historical data was already fetched concurrently in step 3. Two seasonal features are computed per site from this data:
 - **Site season average** -- rolling mean of the last 5 samples
 - **Site historical exceedance rate** -- proportion of samples exceeding 280 MPN/100mL this season
 
