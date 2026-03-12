@@ -27,3 +27,8 @@ Passwords.ini
 venv/
 __pycache__/
 *.py[cod]
+
+# Inference demo
+inference-demo-scripts/.venv-inference/
+inference-demo-scripts/inference_outputs/
+inference-demo-scripts/inference-env.env
