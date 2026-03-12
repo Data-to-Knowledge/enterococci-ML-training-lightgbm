@@ -1,10 +1,24 @@
 # --- Load .env BEFORE any imports use env vars ---
+# Try the script's own directory first so the script works regardless of where
+# it is invoked from (e.g. `python inference-demo-scripts/inference-demo.py`
+# from the repo root). Falls back to find_dotenv upward search for flexibility.
 try:
+    import os as _os
     from dotenv import load_dotenv, find_dotenv
-    for env_name in ("inference-env.env", ".env.local", ".env"):
-        p = find_dotenv(env_name, usecwd=True)
-        if p:
-            load_dotenv(p, override=False)
+    _script_dir = _os.path.dirname(_os.path.abspath(__file__))
+    for _env_name in ("inference-env.env", ".env.local", ".env"):
+        _p = _os.path.join(_script_dir, _env_name)
+        if _os.path.exists(_p):
+            load_dotenv(_p, override=False)
+            break
+    else:
+        # Fallback: search upward from CWD (original behaviour)
+        for _env_name in ("inference-env.env", ".env.local", ".env"):
+            _p = find_dotenv(_env_name, usecwd=True)
+            if _p:
+                load_dotenv(_p, override=False)
+                break
+    del _os, _env_name, _p, _script_dir
 except Exception:
     pass
 
@@ -47,8 +61,8 @@ from helpers import WeatherAPI_Functions as f
 import time
 import logging
 import joblib
-import lightgbm as lgb
 from concurrent.futures import ThreadPoolExecutor
+# lightgbm is imported lazily inside the prediction block (~1.7s import cost)
 from src_inference.data.feature_engineering import FeatureEngineer
 from helpers.inference_data_preparation import *
 from src_inference.config.constants import SITE_CODES as site_codes
@@ -492,6 +506,7 @@ else:
     INFERENCE_DATA = conform_features_to_training(INFERENCE_DATA, reference_df, logger=None)
 
     # --- Load model metadata and set categorical features ---
+    import lightgbm as lgb  # deferred to avoid ~1.7s startup cost before first log
     cat_indices, cat_levels = get_cat_info_from_model_txt(MODEL_TXT_PATH)
     booster = lgb.Booster(model_file=MODEL_TXT_PATH)
     feature_names = booster.feature_name()
