@@ -2,7 +2,7 @@
 env/
 venv/
 env310/
-
+inference-env.env
 # Ignore Python bytecode and cache
 __pycache__/
 *.pyc
