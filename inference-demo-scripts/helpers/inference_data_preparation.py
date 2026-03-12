@@ -209,7 +209,7 @@ def fetch_enterococci_data_for_sites(
     logger=None,
     save_path=None,
     *,
-    event_fn=None,            # pass inference.log_event here; optional
+    event_fn=None,            # optional structured event callback; not used in the demo
     timeout_s=20,
     max_retries=3,
     backoff_base=2.0,

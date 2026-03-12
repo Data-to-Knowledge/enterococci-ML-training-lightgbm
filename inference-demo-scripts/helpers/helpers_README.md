@@ -1,6 +1,6 @@
 # Helper Modules Overview
 
-This directory contains core data processing and API integration functions used by [inference.py](../inference.py).
+This directory contains core data processing and API integration functions used by [inference-demo.py](../inference-demo.py).
 
 **Last Updated:** 28-11-2025
 
@@ -379,7 +379,7 @@ print(akaroa_df)
 | MetService fetch (3 days × 3 vars) | 8-15s | Concurrent variable fetches |
 | NIWA fetch (3 products) | 5-10s | Cached responses (daily refresh) |
 | SHAP computation (15 sites × 12 quantiles) | 5-15s | Batch processing, GPU acceleration |
-| Rolling feature computation | 1-2s | Vectorized operations (already optimized) |
+| Rolling feature computation | 1-2s | Vectorised operations (already optimised) |
 
 ### Memory Usage
 
@@ -493,7 +493,7 @@ When replacing functionality:
 
 1. **Mark as deprecated** in docstring with replacement
 2. **Keep function** for 1-2 releases (backward compatibility)
-3. **Remove references** from inference.py
+3. **Remove references** from inference-demo.py
 4. **Document in CHANGELOG** (if exists)
 
 ---

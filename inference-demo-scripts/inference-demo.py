@@ -14,8 +14,13 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Alias 'src' -> 'src_inference' so joblib can unpickle the model
-# (the .joblib was serialised with src.models.* module paths)
+# Alias 'src' -> 'src_inference' so joblib can unpickle the model.
+# The .joblib file was serialised in the production repo where the package was named 'src'.
+# This folder renames it 'src_inference' to avoid clashes. Before calling joblib.load(),
+# we register every 'src.X' alias in sys.modules pointing at the corresponding
+# 'src_inference.X' module. If the submodule is already imported we reuse it directly;
+# otherwise we import it on-demand. ImportError is silenced for optional submodules
+# (e.g. matrix_decomp) that may not be present in a trimmed deployment.
 import src_inference
 sys.modules["src"] = src_inference
 for attr in ("models", "models.probabilistic", "models.probabilistic.main_probabilistic",
@@ -24,8 +29,8 @@ for attr in ("models", "models.probabilistic", "models.probabilistic.main_probab
              "models.benchmarks", "models.benchmarks.lightgbm_models",
              "data", "data.feature_engineering", "data.preprocessing",
              "config", "config.constants", "config.paths", "utils", "utils.logging"):
-    full = f"src_inference.{attr}"
-    alias = f"src.{attr}"
+    full = f"src_inference.{attr}"   # real module path in this repo
+    alias = f"src.{attr}"            # legacy path baked into the .joblib pickle
     if full in sys.modules:
         sys.modules[alias] = sys.modules[full]
     else:
@@ -33,7 +38,7 @@ for attr in ("models", "models.probabilistic", "models.probabilistic.main_probab
             mod = __import__(full, fromlist=[attr.split(".")[-1]])
             sys.modules[alias] = mod
         except ImportError:
-            pass
+            pass  # optional submodule not present -- skip silently
 
 import pandas as pd
 import datetime as dt
@@ -231,6 +236,28 @@ df_akaroa_weather["DateTime"] = pd.to_datetime(df_akaroa_weather["DateTime"], er
 
 # --- ZERO-ONLY GUARD for Akaroa ---
 def _zeros_only_guard(df_hourly: pd.DataFrame, now_utc: pd.Timestamp, lookback_h: int = 12) -> bool:
+    """Detect a likely NIWA sensor outage by checking for all-zero data.
+
+    A genuine calm day (no rain, no wind) is possible but rare. When every
+    Rainfall, Ve, and Vn value in the most recent window is exactly zero, it
+    is more likely that the sensor is reporting a flat-line rather than real
+    observations. In that case we treat the data as missing so that the health
+    gate excludes Akaroa rather than feeding the model suspect inputs.
+
+    Parameters
+    ----------
+    df_hourly : pd.DataFrame
+        Hourly aggregated Akaroa weather data with DateTime, Rainfall, Ve, Vn columns.
+    now_utc : pd.Timestamp
+        Current UTC timestamp (tz-naive).
+    lookback_h : int
+        Number of recent hours to inspect. Default 12, overridable via NIWA_ZERO_GUARD_H.
+
+    Returns
+    -------
+    bool
+        True if all values in the window are zero or NaN (guard triggered), False otherwise.
+    """
     if df_hourly is None or df_hourly.empty:
         return True
     start_ts = now_utc - dt.timedelta(hours=lookback_h)
@@ -253,6 +280,27 @@ if _zeros_only_guard(df_akaroa_weather, DateTime_UTC, NIWA_ZERO_GUARD_H):
 logger.info("Calculating rolling features for rainfall and wind...")
 
 def _ensure_min_weather_frame(df, label):
+    """Guarantee that a weather DataFrame has the minimum columns needed for rolling feature computation.
+
+    If the DataFrame is None or empty (e.g. the API returned nothing), a
+    single-row placeholder is returned with NaN values. This ensures that
+    downstream rolling operations and the health gate can always run without
+    attribute errors, and that missing data results in NaN features rather than
+    a script crash.
+
+    Parameters
+    ----------
+    df : pd.DataFrame or None
+        Weather DataFrame to validate. Expected columns: DateTime, Rainfall, Ve, Vn.
+    label : str
+        Human-readable harbour name used in log messages ("Akaroa" or "Lyttelton").
+
+    Returns
+    -------
+    pd.DataFrame
+        The input DataFrame with any missing required columns added as NaN,
+        or a single-row NaN placeholder if the input was empty.
+    """
     need = ["DateTime", "Rainfall", "Ve", "Vn"]
     if df is None or df.empty:
         logger.warning(f"No {label} weather available pre-rolling; using NaNs for this hour.")
@@ -334,6 +382,25 @@ lyttelton_at_hour.loc[:, _lt_cols] = [list(lt_vals)]
 
 # --- Final shape for merge ---
 def _prep_row(df_row: pd.DataFrame, harbour_name: str) -> pd.DataFrame:
+    """Prepare a single-hour weather row for merging with site metadata.
+
+    Drops intermediate columns that were needed for rolling computations but
+    are not model inputs (Ve, Vn, DateTime), then stamps the Harbour name so
+    the row can be joined onto the site metadata table.
+
+    Parameters
+    ----------
+    df_row : pd.DataFrame
+        Single-row DataFrame containing the target hour's weather and rolling features.
+    harbour_name : str
+        Harbour label to attach ("Akaroa" or "Lyttelton").
+
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned single-row DataFrame ready for merging, or an empty DataFrame
+        if the input was None or empty.
+    """
     if df_row is None or df_row.empty:
         return pd.DataFrame(columns=["Harbour"])
     out = df_row.copy()
