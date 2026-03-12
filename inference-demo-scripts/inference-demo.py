@@ -45,10 +45,10 @@ import datetime as dt
 import numpy as np
 from helpers import WeatherAPI_Functions as f
 import time
-import warnings
 import logging
 import joblib
 import lightgbm as lgb
+from concurrent.futures import ThreadPoolExecutor
 from src_inference.data.feature_engineering import FeatureEngineer
 from helpers.inference_data_preparation import *
 from src_inference.config.constants import SITE_CODES as site_codes
@@ -145,93 +145,117 @@ reference_df = pd.read_pickle(REFERENCE_SCHEMA_PATH)
 site_data = create_site_metadata(NZ_LOCAL)
 logger.info("Loaded reference schema and site metadata (%d sites).", len(site_data))
 
-logger.info("Fetching weather and tide data...")
+# Pre-compute the Hilltop season window here so it is available for the concurrent fetch below.
+# It depends only on NZ_LOCAL which is already set.
+_season_start_year = NZ_LOCAL.year if NZ_LOCAL.month >= 10 else NZ_LOCAL.year - 1
+_hilltop_from = f"{_season_start_year}-10-01"
+_hilltop_to   = NZ_LOCAL.strftime("%Y-%m-%d")
 
-
-# --- Tides (LINZ static charts only -- no DB) ---
-_t0 = time.perf_counter()
 site_list = ['Akaroa', 'Lyttelton']
 
-now_local = NZ_LOCAL
-if getattr(now_local, "tzinfo", None) is not None:
-    now_local = pd.Timestamp(now_local).tz_localize(None)
 
-tides_df = f.get_tide_data(site_list=site_list, year=False)
-tides_df["DateTime"] = pd.to_datetime(tides_df["DateTime"]).dt.tz_localize(None)
-elapsed_ms = int((time.perf_counter() - _t0) * 1000)
-
-if tides_df.empty:
-    logger.error("LINZ tides returned empty DataFrame.")
-else:
-    logger.info("Tides fetched from LINZ (%d rows, %d ms).", len(tides_df), elapsed_ms)
-
-# --- Normalize tide dataframe ---
-if tides_df is None or tides_df.empty:
-    logger.warning("tides_df is EMPTY; tide features will be set to unknown/NaN.")
-else:
-    try:
-        tides_df["Harbour"] = tides_df["Harbour"].astype(str).str.strip()
-        tides_df["Tidal_state"] = tides_df["Tidal_state"].astype(str).str.strip().str.casefold()
-        tides_df["DateTime"] = pd.to_datetime(tides_df["DateTime"]).dt.tz_localize(None)
-    except Exception as e:
-        logger.warning(f"Failed to normalize tides_df: {e}")
-
-
-# --- Weather (METSERVICE) ---
-logger.info(f"Fetching Lyttelton hourly weather with station preference {station_candidates}...")
-lyttelton_weather_parts = []
-for i in range(3):
+def _fetch_lyt_day(i):
+    """Fetch one 24-hour window of Lyttelton MetService data (used in thread pool)."""
     single_date = DateTime_UTC + dt.timedelta(days=-i)
     try:
-        df_part = f.get_hourly_weather_data_Lyttelton(
+        return f.get_hourly_weather_data_Lyttelton(
             datetime=single_date,
             station_candidates=tuple(station_candidates),
             logger=logger
         )
-        if df_part is not None:
-            lyttelton_weather_parts.append(df_part)
     except Exception as e:
-        logger.warning(f"MetService fetch raised on {single_date.date()}: {e}")
+        logger.warning("MetService fetch raised on %s: %s", single_date.date(), e)
+        return None
 
+
+# Run all six I/O-bound fetches concurrently.
+# Every fetch is independent and network-bound, so threads give near-linear
+# speedup without requiring an async rewrite of the requests-based HTTP layer.
+# Expected wall time: ~10-15s instead of ~40-70s sequential.
+logger.info(
+    "Fetching all data concurrently: MetService (3 days), LINZ tides, NIWA Akaroa, Hilltop..."
+)
+_t_fetch = time.perf_counter()
+
+with ThreadPoolExecutor(max_workers=6) as _pool:
+    _fut_tides   = _pool.submit(f.get_tide_data, site_list=site_list, year=False)
+    _fut_lyt     = [_pool.submit(_fetch_lyt_day, i) for i in range(3)]
+    _fut_akaroa  = _pool.submit(f.get_10min_weather_data_Akaroa, DateTime_UTC, 3, logger=logger)
+    _fut_hilltop = _pool.submit(
+        fetch_enterococci_data_for_sites,
+        site_codes=site_codes,
+        from_date=_hilltop_from,
+        to_date=_hilltop_to,
+        logger=None,
+        save_path=None,
+        timeout_s=10,
+        max_retries=2,
+    )
+    # Collect results -- blocks here until every thread is done
+    _tides_raw              = _fut_tides.result()
+    _lyt_results            = [fut.result() for fut in _fut_lyt]
+    lyttelton_weather_parts = [r for r in _lyt_results if r is not None]
+    df_akaroa_10min_weather = _fut_akaroa.result()
+    hist_df                 = _fut_hilltop.result()
+
+logger.info("All fetches complete in %.1fs.", time.perf_counter() - _t_fetch)
+
+
+# --- Process tides ---
+tides_df = _tides_raw
+if tides_df is None or tides_df.empty:
+    tides_df = pd.DataFrame(columns=["DateTime", "Tidal_height", "Tidal_state", "Harbour"])
+    logger.error("LINZ tides returned empty DataFrame; tide features will be NaN.")
+else:
+    logger.info("Tides fetched from LINZ (%d rows).", len(tides_df))
+    try:
+        tides_df["DateTime"]    = pd.to_datetime(tides_df["DateTime"]).dt.tz_localize(None)
+        tides_df["Harbour"]     = tides_df["Harbour"].astype(str).str.strip()
+        tides_df["Tidal_state"] = tides_df["Tidal_state"].astype(str).str.strip().str.casefold()
+    except Exception as e:
+        logger.warning("Failed to normalise tides_df: %s", e)
+
+
+# --- Process Lyttelton weather ---
 df_lyttelton_weather = (
     pd.concat(lyttelton_weather_parts, ignore_index=True)
     if lyttelton_weather_parts else
-    pd.DataFrame(columns=["DateTime","Rainfall","wind_direction","wind_speed","Ve","Vn","StationId"])
+    pd.DataFrame(columns=["DateTime", "Rainfall", "wind_direction", "wind_speed", "Ve", "Vn", "StationId"])
 )
-
-df_lyttelton_weather = df_lyttelton_weather.drop(['wind_direction', 'wind_speed', 'StationId'],
-                                                 axis=1, errors='ignore')
+df_lyttelton_weather = df_lyttelton_weather.drop(
+    ['wind_direction', 'wind_speed', 'StationId'], axis=1, errors='ignore')
 if not df_lyttelton_weather.empty:
-    df_lyttelton_weather["DateTime"] = pd.to_datetime(df_lyttelton_weather["DateTime"], errors="coerce").dt.tz_localize(None)
+    df_lyttelton_weather["DateTime"] = (
+        pd.to_datetime(df_lyttelton_weather["DateTime"], errors="coerce").dt.tz_localize(None)
+    )
 else:
     logger.warning("No Lyttelton weather returned from MetService; using NaNs for this hour.")
-    df_lyttelton_weather = pd.DataFrame([{"DateTime": DateTime_UTC, "Rainfall": np.nan, "Ve": np.nan, "Vn": np.nan}])
+    df_lyttelton_weather = pd.DataFrame(
+        [{"DateTime": DateTime_UTC, "Rainfall": np.nan, "Ve": np.nan, "Vn": np.nan}]
+    )
 
 
-# --- Akaroa Weather (NIWA Mintaka) ---
-logger.info("Fetching Akaroa 10-min weather data...")
-_t0 = time.perf_counter()
-df_akaroa_10min_weather = f.get_10min_weather_data_Akaroa(
-    DateTime_UTC, 3,
-    logger=logger
-)
-elapsed_ms = int((time.perf_counter() - _t0) * 1000)
-
+# --- Process Akaroa weather ---
 if df_akaroa_10min_weather is None or df_akaroa_10min_weather.empty:
     df_akaroa_10min_weather = pd.DataFrame(columns=["DateTime", "Rainfall", "Ve", "Vn"])
     logger.warning("NIWA Akaroa weather returned empty.")
 
-# Normalize to hourly and keep vectors for rolling
-df_akaroa_10min_weather["DateTime"] = pd.to_datetime(df_akaroa_10min_weather["DateTime"], errors="coerce").dt.tz_localize(None)
-df_akaroa_10min_weather["DateTime"] = df_akaroa_10min_weather["DateTime"].dt.floor("h")
-df_akaroa_10min_weather = df_akaroa_10min_weather.drop(['wind_direction', 'wind_speed'], axis=1, errors='ignore')
-
+# Floor timestamps to the hour, then aggregate 10-min observations to hourly totals/means
+df_akaroa_10min_weather["DateTime"] = (
+    pd.to_datetime(df_akaroa_10min_weather["DateTime"], errors="coerce")
+      .dt.tz_localize(None)
+      .dt.floor("h")
+)
+df_akaroa_10min_weather = df_akaroa_10min_weather.drop(
+    ['wind_direction', 'wind_speed'], axis=1, errors='ignore')
 df_akaroa_weather = df_akaroa_10min_weather.groupby('DateTime', as_index=False).agg(
-    Rainfall=('Rainfall', 'sum'),
+    Rainfall=('Rainfall', 'sum'),   # sum gives hourly accumulation
     Ve=('Ve', 'mean'),
     Vn=('Vn', 'mean')
 )
-df_akaroa_weather["DateTime"] = pd.to_datetime(df_akaroa_weather["DateTime"], errors="coerce").dt.tz_localize(None)
+df_akaroa_weather["DateTime"] = (
+    pd.to_datetime(df_akaroa_weather["DateTime"], errors="coerce").dt.tz_localize(None)
+)
 
 
 # --- ZERO-ONLY GUARD for Akaroa ---
@@ -443,29 +467,11 @@ else:
     nowcast['DateTime'] = pd.to_datetime(nowcast['DateTime'], errors='coerce').dt.tz_localize(None)
 
     # --- Historical Enterococci (Hilltop) ---
-    if NZ_LOCAL.month >= 10:
-        season_start_year = NZ_LOCAL.year
-    else:
-        season_start_year = NZ_LOCAL.year - 1
-
-    from_date = f"{season_start_year}-10-01"
-    to_date = NZ_LOCAL.strftime("%Y-%m-%d")
-
-    logger.info(f"Fetching Enterococci data from {from_date} to {to_date} (current season only).")
-
-    hist_df = fetch_enterococci_data_for_sites(
-        site_codes=site_codes,
-        from_date=from_date,
-        to_date=to_date,
-        logger=None,
-        save_path=None,
-        timeout_s=10,
-        max_retries=2,
-    )
-
+    # hist_df was already fetched concurrently with the weather data above.
+    logger.info("Using Hilltop data for season %s to %s.", _hilltop_from, _hilltop_to)
     if not hist_df.empty:
         hist_df['DateTime'] = pd.to_datetime(hist_df['DateTime'], errors='coerce').dt.tz_localize(None)
-        logger.info(f"Fetched {len(hist_df)} records from Hilltop.")
+        logger.info("Fetched %d records from Hilltop.", len(hist_df))
     else:
         logger.warning("Hilltop fetch returned empty dataframe.")
 

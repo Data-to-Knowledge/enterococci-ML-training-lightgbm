@@ -41,15 +41,15 @@ Rainfall is one of the strongest predictors of Enterococci. Heavy rain washes co
 
 | Column | Description |
 |--------|-------------|
-| `tidal_state` | Categorical: incoming, outgoing, high, low |
-| `hours_to_high_tide` | Hours until the next high tide |
+| `tidal_state` | Categorical: `"incoming"` (before high tide) or `"ebbing"` (after high tide) |
+| `hours_to_high_tide` | Signed hours to the closest high tide -- positive means the high tide has passed, negative means it is still approaching |
 | `high_tide_height` | Height of the nearest high tide (metres) |
 
 ### Site Characteristics (static per site)
 
 | Column | Description |
 |--------|-------------|
-| `Harbour` | Whether the site is in a harbour (sheltered) or on the open coast |
+| `Harbour` | Harbour name the site belongs to: `"Lyttelton"` or `"Akaroa"` -- used as a grouping variable for weather features and site metadata |
 | `Latitude`, `Longitude` | Geographic coordinates |
 | `Shallowness` | How shallow the water is at the monitoring point |
 | `Soil_type` | Dominant soil type in the catchment |
