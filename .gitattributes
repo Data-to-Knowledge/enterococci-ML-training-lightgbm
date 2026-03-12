@@ -16,6 +16,9 @@ data/** linguist-vendored
 output/** linguist-vendored
 archive/** linguist-vendored
 
+# LightGBM model text files -- treat as binary to prevent CRLF conversion corrupting model parsing
+inference-demo-scripts/trained_models_inference/*.txt -text
+
 # Exclude common file types
 *.csv linguist-vendored
 *.html linguist-vendored
